@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
+
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -12,9 +14,13 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <header className="p-4 border-b bg-white">
-        <div className="border-2 border-black inline-block px-3 py-1 font-bold text-xl">
-          IBA Connect
-        </div>
+        <Image 
+          src="/logo.png" 
+          alt="IBA Connect Logo" 
+          width={50} 
+          height={50} 
+          className="rounded-lg"
+        />
       </header>
 
       <main className="flex-grow flex flex-col items-center pt-20 p-4">

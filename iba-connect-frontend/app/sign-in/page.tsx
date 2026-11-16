@@ -3,6 +3,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+
 
 export default function SignIn() {
   const [error, setError] = useState<string | null>('Only @khi.iba.edu.pk accounts can join');
@@ -10,9 +12,13 @@ export default function SignIn() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <header className="p-4 border-b bg-white">
-        <div className="border-2 border-black inline-block px-3 py-1 font-bold text-xl">
-          IBA Connect
-        </div>
+        <Image 
+          src="/logo.png" 
+          alt="IBA Connect Logo" 
+          width={50} 
+          height={50} 
+          className="rounded-lg"
+        />
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center p-4">
