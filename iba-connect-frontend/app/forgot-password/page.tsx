@@ -32,7 +32,13 @@ export default function ForgotPassword() {
     e.preventDefault();
     setSubmitAttempted(true);
     
-    // Only show success if they provided an email AND there are no domain errors
+    // Trigger top-right error toast if the field is completely empty
+    if (!email.trim()) {
+      setError('Please enter an email address');
+      setIsSent(false);
+      return;
+    }
+    
     if (email && !error) {
       setIsSent(true);
     }
