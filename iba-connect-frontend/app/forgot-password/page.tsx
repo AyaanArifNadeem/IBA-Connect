@@ -82,7 +82,7 @@ export default function ForgotPassword() {
       <main className="flex-1 flex flex-col items-center justify-center p-4 z-10 relative">
         
         {/* Elevated Card */}
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8">
+        <div className="w-full max-w-sm bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Forgot password</h1>
             <p className="text-xs text-gray-500 mt-1">Enter your email to receive a reset link</p>
