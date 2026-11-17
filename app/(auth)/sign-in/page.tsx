@@ -3,8 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { postJson } from '@/lib/client/api';
+import { safeNextPath } from '@/lib/validation/auth';
 
 export default function SignIn() {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +36,12 @@ export default function SignIn() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     // Clear the incorrect password error as soon as the user starts typing again
-    if (error === 'Incorrect password. Please try again.') {
+    if (error === 'Incorrect email or password.') {
       setError(null);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
 
@@ -50,8 +55,26 @@ export default function SignIn() {
       return;
     }
 
-    // Simulate an incorrect password check for the frontend UI
-    setError('Incorrect password. Please try again.');
+    setError(null);
+    setSubmitting(true);
+    const result = await postJson<{ next: string }>('/api/v1/auth/sign-in', { email, password });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      if (result.error.code === 'email_not_verified') {
+        router.push('/verify?error=unverified');
+        return;
+      }
+      setError(result.error.message);
+      return;
+    }
+
+    // Go back to the page the member asked for, unless their profile still needs finishing
+    const requested = new URLSearchParams(window.location.search).get('next');
+    const destination =
+      result.data.next === '/dashboard' ? safeNextPath(requested, '/dashboard') : result.data.next;
+    router.push(destination);
+    router.refresh();
   };
 
   return (
@@ -152,8 +175,8 @@ export default function SignIn() {
               </Link>
             </div>
 
-            <button type="submit" className="w-full border border-gray-200 bg-white text-gray-900 py-2 rounded-xl text-sm font-bold hover:border-[#808080] hover:bg-gray-50 hover:text-[#8b0000] hover:shadow-sm transition-all active:scale-[0.98] mt-2">
-              Sign in with Email
+            <button type="submit" disabled={submitting} className="w-full border border-gray-200 bg-white text-gray-900 py-2 rounded-xl text-sm font-bold hover:border-[#808080] hover:bg-gray-50 hover:text-[#8b0000] hover:shadow-sm transition-all active:scale-[0.98] mt-2 disabled:opacity-60">
+              {submitting ? 'Signing in...' : 'Sign in with Email'}
             </button>
           </form>
 
