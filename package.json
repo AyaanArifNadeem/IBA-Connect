@@ -17,7 +17,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "docs:build": "node scripts/build-docs.mjs"
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs:test-cases": "node scripts/export-test-cases.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -54,6 +55,7 @@
     "dotenv": "^18.0.10",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "exceljs": "^4.4.0",
     "jsdom": "^31.0.1",
     "prisma": "^7.10.1",
     "tailwindcss": "4.3.3",

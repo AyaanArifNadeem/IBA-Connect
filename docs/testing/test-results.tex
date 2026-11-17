@@ -1,0 +1,56 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\docinfo{Test Results (Sprint 1)}{1.0}{17 Nov 2026}
+
+\IfFileExists{generated/test-cases.tex}{\input{generated/test-cases.tex}}{%
+  \PackageError{testresults}{Run npm run docs:build (it exports test-cases.json first)}{}}
+
+\begin{document}
+\makedoctitle
+
+Results of executing the Sprint 1 test cases. Every \textbf{Actual Output} and \textbf{Pass / Fail} entry comes from a real run, either a manual execution recorded by the tester or an automated test whose name contains the test case ID. Cases not yet executed are left blank.
+
+\section*{Summary}
+\begin{tabular}{@{}l r@{}}
+\toprule
+Test cases & \tctotal\\
+Passed & \tcpassed\\
+Failed & \tcfailed\\
+Not yet run & \tcnotrun\\
+\bottomrule
+\end{tabular}
+
+\section*{Execution runs}
+\begin{tabularx}{\linewidth}{@{}l l l X@{}}
+\toprule
+\textbf{Date} & \textbf{Tester} & \textbf{Build / commit} & \textbf{Environment and scope}\\
+\midrule
+ & & & \\[12pt]
+\bottomrule
+\end{tabularx}
+
+\section*{Results by test case}
+{\small
+\begin{longtable}{@{}p{12mm} p{12mm} >{\raggedright\arraybackslash}p{62mm} >{\raggedright\arraybackslash}p{58mm} p{12mm}@{}}
+\toprule
+\textbf{TC} & \textbf{Req.} & \textbf{Scenario} & \textbf{Actual Output} & \textbf{Result}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\tcrowsresults
+\end{longtable}
+}
+
+\section*{Defects found}
+Defects are logged as GitHub issues (bug template) and fixed on \texttt{fix/*} branches.
+
+\begin{tabularx}{\linewidth}{@{}l l X l@{}}
+\toprule
+\textbf{Issue} & \textbf{Test case} & \textbf{Summary} & \textbf{Status}\\
+\midrule
+ & & & \\[12pt]
+\bottomrule
+\end{tabularx}
+
+\end{document}
