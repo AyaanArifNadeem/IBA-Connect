@@ -1,0 +1,31 @@
+\documentclass[9pt,a4paper]{extarticle}
+\usepackage{ibaconnect}
+\geometry{landscape,margin=12mm}
+\docinfo{Test Cases (Sprint 1)}{1.0}{17 Nov 2026}
+
+\IfFileExists{generated/test-cases.tex}{\input{generated/test-cases.tex}}{%
+  \PackageError{testcases}{Run npm run docs:build (it exports test-cases.json first)}{}}
+
+\begin{document}
+\makedoctitle
+
+Test cases for the Sprint 1 requirements (F1--F4) and the key non-functional requirements, in the course test-case template. They are written from the acceptance criteria in the Use Cases and User Stories document, with at least one positive and one negative case per requirement. The same cases are exported to \texttt{IBA\_Connect\_Test\_Cases.xlsx} in the template layout.
+
+\textbf{Source:} \texttt{docs/testing/test-cases.json} (edit there; this table and the spreadsheet are generated). \textbf{Actual Output} and \textbf{Pass / Fail} are filled in only from real test runs; see the Test Results document.
+
+\textbf{Totals:} \tctotal{} cases (\tcpositive{} positive, \tcnegative{} negative).
+
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}p{10mm} p{10mm} >{\raggedright\arraybackslash}p{17mm} >{\raggedright\arraybackslash}p{34mm} p{11mm} >{\raggedright\arraybackslash}p{24mm} >{\raggedright\arraybackslash}p{42mm} >{\raggedright\arraybackslash}p{20mm} >{\raggedright\arraybackslash}p{36mm} >{\raggedright\arraybackslash}p{21mm} p{9mm}@{}}
+\toprule
+\textbf{Test Case No} & \textbf{Req. No.} & \textbf{Feature Name} & \textbf{Scenario / Description} & \textbf{Pos. / Neg.} & \textbf{Pre-Condition} & \textbf{Steps} & \textbf{Test Data} & \textbf{Expected Output} & \textbf{Actual Output} & \textbf{Pass / Fail}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\tcrowsfull
+\end{longtable}
+}
+
+\end{document}
