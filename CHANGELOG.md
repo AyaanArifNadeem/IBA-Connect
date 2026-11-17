@@ -11,6 +11,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Continuous integration: lint, type-check, unit tests, build and end-to-end tests on every pull request.
 - Database schema for Sprint 1 (identity, profiles, courses, skills, connections, messages, Need Board, audit log), first migration with row-level security, and a demo seed.
 - Signed-in app shell with top menu, phone bottom bar and account menu; shadcn/ui components and IBA theme.
+- API foundation: standard JSON errors, Zod request validation, server-side access guard, Postgres-backed rate limiter, Brevo email adapter and `GET /api/v1/health`.
 
 ### Changed
 - The Next.js app moved from `iba-connect-frontend/` to the repository root; auth pages are grouped under `app/(auth)/`.
