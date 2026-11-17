@@ -13,9 +13,24 @@ function createPrismaClient() {
   });
 }
 
+type Client = ReturnType<typeof createPrismaClient>;
+
 // Reuse one client across hot reloads in development.
-const globalForPrisma = globalThis as unknown as { prisma?: ReturnType<typeof createPrismaClient> };
+const globalForPrisma = globalThis as unknown as { prisma?: Client };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+function getClient(): Client {
+  if (!globalForPrisma.prisma) globalForPrisma.prisma = createPrismaClient();
+  return globalForPrisma.prisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+/**
+ * Shared Prisma client, created on first use so that importing this module (for example
+ * while Next.js builds) does not need a database connection.
+ */
+export const db = new Proxy({} as Client, {
+  get(_target, property) {
+    const client = getClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
