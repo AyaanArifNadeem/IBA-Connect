@@ -50,9 +50,17 @@ All variables are listed with comments in [`.env.example`](.env.example). Real v
 | `npm run typecheck` | Generate route types and run the TypeScript compiler |
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:watch` | Unit tests in watch mode |
+| `npm run test:integration` | Integration tests against a real Postgres (`TEST_DATABASE_URL`) |
 | `npm run test:e2e` | End-to-end tests (Playwright; run `npx playwright install chromium` once, and `npm run build` first) |
 
+| `npm run db:migrate` / `db:deploy` | Create or apply database migrations |
+| `npm run db:seed` | Load demo data |
+
 This table is kept up to date as scripts are added.
+
+### Database
+
+The database is PostgreSQL on Supabase, managed with Prisma. After filling in `.env.local`, run `npm run db:deploy` and `npm run db:seed`. See [prisma/README.md](prisma/README.md) for migrations, the rules kept in SQL and the seed data.
 
 ## Project layout
 
