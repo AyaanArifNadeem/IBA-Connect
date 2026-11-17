@@ -7,6 +7,7 @@ import {
   suspended,
   unauthorized,
 } from "@/lib/api/errors";
+import { hasIbaDomain } from "@/lib/validation/auth";
 
 export type AccessOptions = {
   /** Require a finished profile (most member features). Default true. */
@@ -45,7 +46,5 @@ export function assertAccess(
 
 /** True when the email belongs to the IBA domain (exact domain, case-insensitive). */
 export function isIbaEmail(email: string, domain: string): boolean {
-  const at = email.lastIndexOf("@");
-  if (at < 1) return false;
-  return email.slice(at + 1).toLowerCase() === domain.toLowerCase();
+  return hasIbaDomain(email, domain);
 }
