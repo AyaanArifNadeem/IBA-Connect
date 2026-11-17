@@ -1,0 +1,69 @@
+% Shared style for IBA Connect project documents (team NameNotFound).
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ibaconnect}[2026/11/17 IBA Connect document style]
+
+\RequirePackage[a4paper,margin=20mm]{geometry}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[scaled=0.95]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{xcolor}
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{tabularx}
+\RequirePackage{colortbl}
+\RequirePackage{enumitem}
+\RequirePackage{amssymb}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{lastpage}
+\RequirePackage{graphicx}
+\RequirePackage[hidelinks]{hyperref}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{8B0000}
+\definecolor{soft}{HTML}{F3F4F6}
+\definecolor{mid}{HTML}{6B7280}
+\color{ink}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=14pt,topsep=2pt}
+\renewcommand{\arraystretch}{1.2}
+
+\titleformat{\section}{\color{accent}\bfseries\Large}{\thesection}{8pt}{}
+\titleformat{\subsection}{\color{accent}\bfseries\large}{\thesubsection}{6pt}{}
+\titlespacing*{\section}{0pt}{12pt}{4pt}
+\titlespacing*{\subsection}{0pt}{8pt}{3pt}
+
+% \docinfo{Document title}{Version}{Date}
+\newcommand{\doctitle}{}
+\newcommand{\docversion}{}
+\newcommand{\docdate}{}
+\newcommand{\docinfo}[3]{%
+  \renewcommand{\doctitle}{#1}\renewcommand{\docversion}{#2}\renewcommand{\docdate}{#3}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\color{mid}\small IBA Connect \textbullet{} \doctitle}
+\fancyhead[R]{\color{mid}\small v\docversion}
+\fancyfoot[L]{\color{mid}\small Team NameNotFound \textbullet{} Software Engineering, Fall 2026}
+\fancyfoot[R]{\color{mid}\small Page \thepage\ of \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\makedoctitle}{%
+  {\color{accent}\bfseries\LARGE IBA Connect}\hfill{\large\bfseries\doctitle}\\[2pt]
+  {\color{mid}Team NameNotFound \textbullet{} Software Engineering, Fall 2026 \textbullet{} Instructor: Mr.\ Ahsan Jawed}\hfill{\color{mid}Version \docversion{} \textbullet{} \docdate}\\[-2pt]
+  {\color{accent}\rule{\linewidth}{1.2pt}}\par\vspace{4pt}}
+
+% Blank to be filled in by hand or from real records
+\newcommand{\blank}[1][3cm]{\makebox[#1]{\dotfill}}
+\newcommand{\cb}{$\square$}
+\newcommand{\featrow}[2]{\rowcolor{soft}\multicolumn{#1}{@{}l}{\bfseries #2}\\}
+
+% Revision history table: \begin{revisions} 1.0 & date & author & change \\ \end{revisions}
+\newenvironment{revisions}{%
+  \tabularx{\linewidth}{@{}l l l X@{}}\toprule
+  \textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Change}\\\midrule}{%
+  \bottomrule\endtabularx}
