@@ -49,3 +49,7 @@ next-env.d.ts
 
 # generated Prisma client
 /lib/generated/
+
+# LaTeX build output
+/docs/build/
+.latex-out/
