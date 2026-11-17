@@ -1,0 +1,44 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\docinfo{Sprint 1 Burndown}{1.0}{17 Nov 2026}
+
+% Planned points and sprint length (working days)
+\newcommand{\plannedpoints}{84}
+\newcommand{\sprintdays}{10}
+
+\begin{document}
+\makedoctitle
+
+The burndown shows the story points still to do at the end of each working day of the sprint. The dashed line is the ideal pace. The solid line is read from \texttt{burndown-data.csv}: add one row per day (\texttt{day,remaining}) from the Trello board, using only points from items that meet the Definition of Done.
+
+\pgfplotstableread[col sep=comma]{burndown-data.csv}\burndowndata
+\pgfplotstablegetrowsof{\burndowndata}
+\edef\burndownrows{\pgfplotsretval}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=9cm,
+  xlabel={Working day of the sprint}, ylabel={Story points remaining},
+  xmin=0, xmax=\sprintdays, ymin=0, ymax=\plannedpoints+5,
+  xtick={0,...,\sprintdays}, grid=major, grid style={gray!20},
+  legend pos=north east, legend cell align=left,
+]
+\addplot[dashed, mid, thick, domain=0:\sprintdays] {\plannedpoints - \plannedpoints/\sprintdays*x};
+\addlegendentry{Ideal}
+\ifnum\burndownrows>0
+  \addplot[accent, very thick, mark=*] table[x=day, y=remaining] {\burndowndata};
+  \addlegendentry{Actual}
+\fi
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\ifnum\burndownrows=0
+\textit{No daily data recorded yet.}
+\fi
+
+\end{document}
