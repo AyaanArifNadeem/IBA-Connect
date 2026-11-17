@@ -47,8 +47,12 @@ All variables are listed with comments in [`.env.example`](.env.example). Real v
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
+| `npm run typecheck` | Generate route types and run the TypeScript compiler |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:watch` | Unit tests in watch mode |
+| `npm run test:e2e` | End-to-end tests (Playwright; run `npx playwright install chromium` once, and `npm run build` first) |
 
-More scripts (type-check, tests, database) are added as the tooling lands; this table is kept up to date.
+This table is kept up to date as scripts are added.
 
 ## Project layout
 
