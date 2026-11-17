@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { postJson } from '@/lib/client/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -43,7 +44,9 @@ export default function Register() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
     
@@ -90,9 +93,23 @@ export default function Register() {
       return;
     }
 
+    // 8. Create the account (the server checks everything again)
     setError(null);
+    setSubmitting(true);
+    const result = await postJson('/api/v1/auth/register', { name, email, password });
+    setSubmitting(false);
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
     setIsSuccess(true);
     setCountdown(45);
+  };
+
+  const handleResend = async () => {
+    setCountdown(45);
+    const result = await postJson('/api/v1/auth/resend-verification', { email });
+    if (!result.ok) setError(result.error.message);
   };
 
   const handleWrongEmail = () => {
@@ -154,7 +171,7 @@ export default function Register() {
                 <button 
                   type="button"
                   disabled={countdown > 0}
-                  onClick={() => setCountdown(45)}
+                  onClick={handleResend}
                   className="w-full py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-green-700 disabled:opacity-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
                 >
                   Resend Link {countdown > 0 ? `(0:${countdown.toString().padStart(2, '0')})` : ''}
@@ -293,9 +310,10 @@ export default function Register() {
 
               <button 
                 type="submit"
-                className="w-full bg-[#8b0000] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6b0000] hover:shadow-md transition-all active:scale-[0.98] mt-4"
+                disabled={submitting}
+                className="w-full bg-[#8b0000] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6b0000] hover:shadow-md transition-all active:scale-[0.98] mt-4 disabled:opacity-60"
               >
-                Create account
+                {submitting ? 'Creating account...' : 'Create account'}
               </button>
             </form>
 
