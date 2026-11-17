@@ -30,6 +30,10 @@ function findDocuments(dir) {
   return found;
 }
 
+// Generate the test case table and spreadsheet from test-cases.json first
+const exported = spawnSync(process.execPath, [join(root, "scripts/export-test-cases.mjs")], { stdio: "inherit" });
+if (exported.status !== 0) process.exit(exported.status ?? 1);
+
 const docs = findDocuments(docsDir).filter((f) => !filter || relative(docsDir, f).includes(filter));
 if (docs.length === 0) {
   console.error(filter ? `No documents match "${filter}".` : "No documents found.");
