@@ -1,0 +1,74 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\docinfo{Sprint 1 Backlog}{1.0}{17 Nov 2026}
+
+\newcommand{\tasks}[1]{\begin{minipage}[t]{\linewidth}\begin{itemize}[leftmargin=10pt,label=--,topsep=0pt,partopsep=0pt,itemsep=0pt,parsep=0pt]#1\end{itemize}\vspace{2pt}\end{minipage}}
+
+\begin{document}
+\makedoctitle
+
+\textbf{Sprint 1:} 2--15 Nov 2026 \quad \textbf{Review:} 16--24 Nov 2026 \quad \textbf{Features:} F1, F2, F3, F4 \quad \textbf{Planned: 84 points (proposed)}
+
+\textbf{Sprint goal:} \blank[11cm]
+
+The sprint backlog breaks every Sprint 1 item into tasks. Each item is built on its own \texttt{feature/*} branch and merged into \texttt{develop} by pull request when it meets the Definition of Done. \textbf{Owner} and \textbf{Status} are filled in from the Trello board as work happens; points are proposals until the team confirms them.
+
+\textbf{Order:} foundation first, then F1 $\rightarrow$ F2 $\rightarrow$ F3 $\rightarrow$ F4, with the dashboard and account deletion last because they depend on F3 and F4.
+
+\section*{Foundation (no story points)}
+Repository restructure, test tooling and CI, UI foundation and app shell, database schema and seed, API foundation (errors, validation, access guard, rate limiter, email), documentation scaffold.
+
+\section*{Backlog items}
+{\small
+\begin{longtable}{@{}p{6mm} >{\raggedright\arraybackslash}p{30mm} >{\raggedright\arraybackslash}p{82mm} c p{14mm} p{12mm}@{}}
+\toprule
+\textbf{\#} & \textbf{Item} & \textbf{Tasks} & \textbf{Pts} & \textbf{Owner} & \textbf{Status}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\featrow{6}{F1 \; Identity \& verified profile}
+1 & US1.2 Email registration & \tasks{\item Wire register and sign-in pages to Supabase Auth \item Verification email and \texttt{/verify} page \item Block unverified users \item Create member record on first sign-in \item Rate-limit sign-in and registration \item Tests: TC for FR1.2} & 5 & & \\
+2 & US1.3 Password reset and change & \tasks{\item Wire forgot and reset pages \item Change password in settings \item Tests} & 3 & & \\
+3 & FR1.6 Sign out and sessions & \tasks{\item Sign out \item Idle-session expiry \item Request interceptor signs out suspended members \item Tests} & 3 & & \\
+4 & US1.5 Profile setup & \tasks{\item Profile API with validation \item First sign-in redirect to profile setup (P03) \item Skills and courses pickers \item Tests} & 5 & & \\
+5 & US1.6 Edit profile and avatar & \tasks{\item Edit page \item Avatar upload to Supabase Storage (images only) \item Tests} & 3 & & \\
+6 & US1.7 Alumni fields & \tasks{\item Field and company for alumni \item Tests} & 1 & & \\
+7 & US1.8 Available to advise & \tasks{\item Toggle with per-course advise flags \item Advise badge \item Tests} & 2 & & \\
+8 & US1.1 Microsoft sign-in & \tasks{\item Azure provider in Supabase \item Callback checks the verified IBA domain on the server \item Refuse other accounts without creating them \item Tests} & 5 & & \\
+9 & US1.4 Alumni verification & \tasks{\item \texttt{/verify-alumni} page \item Code or alumni-list email check, claimed once \item Tests} & 3 & & \\
+10 & FR1.9 Admin: alumni codes & \tasks{\item Create, list, expire, revoke codes \item Upload alumni list (CSV) \item Audit log entries \item Tests} & 3 & & \\
+11 & FR1.10 Admin: course list & \tasks{\item Add, edit, retire courses \item Audit log entries \item Tests} & 2 & & \\
+\featrow{6}{F2 \; Directory \& search}
+12 & US2.1 Directory & \tasks{\item Paginated directory API and page (P06) \item No contact details \item Tests} & 3 & & \\
+13 & US2.6 Member profile & \tasks{\item Profile page (P07) \item Email hidden unless connected \item Tests} & 2 & & \\
+14 & US2.2 Free-text search & \tasks{\item Search over name, skill and course with indexes \item Measure p95 on 1,000 seeded members \item Tests} & 3 & & \\
+15 & US2.3--US2.5 Filters & \tasks{\item Course, skill, advise, batch, department/programme filters \item Alumni field and company filters \item Tests} & 5 & & \\
+\featrow{6}{F3 \; Connections \& messaging}
+16 & US3.1, US3.2 Connection requests & \tasks{\item Send request with note \item Daily limit and cooldown \item Email notification (Brevo) \item Tests} & 5 & & \\
+17 & US3.3 Accept or decline & \tasks{\item Accept / decline API and buttons \item Tests} & 2 & & \\
+18 & US3.4 Requests inbox & \tasks{\item Incoming, outgoing, accepted tabs (P08) \item Tests} & 2 & & \\
+19 & US3.5 Private chat & \tasks{\item Message API, accepted connections only \item Chat page (P09) with polling \item 2,000-character limit \item Tests} & 5 & & \\
+20 & US3.6 Unread indicators & \tasks{\item Read receipts \item Unread badges in menu and threads \item Tests} & 2 & & \\
+21 & US3.7 Contact visibility & \tasks{\item Email only for accepted connections \item Tests} & 1 & & \\
+22 & FR3.7 Block a member & \tasks{\item Block / unblock \item Refuse requests and messages \item Tests} & 2 & & \\
+\featrow{6}{F4 \; Need Board}
+23 & US4.1 Create a post & \tasks{\item Post form (P11) \item Types, tags, 14-day expiry \item Tests} & 3 & & \\
+24 & US4.2 Browse and filter & \tasks{\item Board page (P10) with filters \item Tests} & 2 & & \\
+25 & US4.3 Respond to a post & \tasks{\item Response opens a connection request \item Same limits as FR3.1 \item Tests} & 3 & & \\
+26 & US4.4, US4.5 Close and expire & \tasks{\item Close early \item Expired posts leave the board \item My post page with responses (P12) \item Tests} & 2 & & \\
+27 & FR4.5 Edit own post & \tasks{\item Edit while open \item Tests} & 1 & & \\
+\featrow{6}{F1 \; Finishing items}
+28 & FR1.7 Dashboard & \tasks{\item Dashboard (P04): requests, unread, my posts, shortcuts \item Tests} & 3 & & \\
+29 & FR1.8 Deactivate or delete & \tasks{\item Deactivate and delete in settings \item Anonymise retained records \item Tests} & 3 & & \\
+\midrule
+& \textbf{Total} & & \textbf{84} & & \\
+\end{longtable}
+}
+
+\section*{Revision history}
+\begin{revisions}
+1.0 & 17 Nov 2026 & Ahmed Abdul Rahim & Sprint 1 items and tasks with proposed points.\\
+\end{revisions}
+
+\end{document}
