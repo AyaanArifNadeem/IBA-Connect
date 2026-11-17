@@ -62,6 +62,10 @@ This table is kept up to date as scripts are added.
 
 The database is PostgreSQL on Supabase, managed with Prisma. After filling in `.env.local`, run `npm run db:deploy` and `npm run db:seed`. See [prisma/README.md](prisma/README.md) for migrations, the rules kept in SQL and the seed data.
 
+### Supabase
+
+Authentication settings, email templates and the Brevo SMTP setup are in [docs/setup/supabase.md](docs/setup/supabase.md).
+
 ## Project layout
 
 ```
