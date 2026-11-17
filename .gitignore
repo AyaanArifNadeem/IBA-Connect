@@ -53,3 +53,4 @@ next-env.d.ts
 # LaTeX build output
 /docs/build/
 .latex-out/
+/docs/testing/generated/
