@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { requireCompletedProfile } from "@/lib/auth/pages";
+import { getDashboard } from "@/lib/services/dashboard";
 
 export const metadata: Metadata = { title: "Dashboard · IBA Connect" };
 
-// The full dashboard (pending requests, unread messages, my posts) is backlog item FR1.7.
+/** Dashboard after sign-in (FR1.7, wireframe P04). */
 export default async function DashboardPage() {
   const member = await requireCompletedProfile();
-  const firstName = member.name.split(" ")[0];
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-bold">Hi {firstName}</h1>
-      <p className="text-muted-foreground">Welcome to IBA Connect.</p>
-    </div>
-  );
+  const data = await getDashboard(member.id);
+  return <DashboardView name={member.name} data={data} />;
 }
