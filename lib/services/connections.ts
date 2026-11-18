@@ -79,7 +79,7 @@ export async function relationship(viewerId: string, otherId: string, now = new 
  */
 export async function sendRequest(
   requester: { id: string; name: string },
-  input: { recipientId: string; note: string; originPostId?: string | null },
+  input: { recipientId: string; note: string; originPostId?: string | null; postTitle?: string | null },
   now = new Date(),
 ) {
   if (input.recipientId === requester.id) throw badRequest("You cannot send a request to yourself.");
@@ -122,7 +122,7 @@ export async function sendRequest(
 
   // Email the recipient; a failed email does not undo the request (FR3.6)
   try {
-    await getEmailSender().send(connectionRequestEmail({ to: recipient, from: requester.name, note: input.note, appUrl: publicEnv().appUrl }));
+    await getEmailSender().send(connectionRequestEmail({ to: recipient, from: requester.name, note: input.note, appUrl: publicEnv().appUrl, postTitle: input.postTitle }));
   } catch (err) {
     console.warn("[email] connection request email failed", { reason: err instanceof Error ? err.message : "unknown" });
   }

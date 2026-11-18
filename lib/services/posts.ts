@@ -1,12 +1,13 @@
 import "server-only";
 import { z } from "zod";
-import { validationFailed } from "@/lib/api/errors";
+import { badRequest, conflict, notFound, validationFailed } from "@/lib/api/errors";
 import { BODY_MAX, POST_LIFETIME_DAYS, POST_TYPE_SLUGS, POST_TYPES, TITLE_MAX, type PostTypeValue } from "@/lib/board";
 import { DEPARTMENTS } from "@/lib/constants/academics";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { PostStatus, UserStatus } from "@/lib/generated/prisma/enums";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { sendRequest } from "./connections";
 
 /** A need post (FR4.1): type, title and details required; an optional course OR department tag. */
 export const postSchema = z
@@ -107,6 +108,7 @@ export async function listOpenPosts(viewerId: string, query: BoardQuery, now = n
         author: { select: { id: true, name: true, avatarPath: true } },
         course: { select: { code: true } },
         _count: { select: { responses: true } },
+        responses: { where: { responderId: viewerId }, select: { id: true }, take: 1 },
       },
     }),
   ]);
@@ -126,8 +128,49 @@ export async function listOpenPosts(viewerId: string, query: BoardQuery, now = n
       author: { id: p.author.id, name: p.author.name, avatarPath: p.author.avatarPath },
       mine: p.authorId === viewerId,
       responses: p._count.responses,
+      respondedByMe: p.responses.length > 0,
     })),
   };
 }
 
 export type BoardPost = Awaited<ReturnType<typeof listOpenPosts>>["posts"][number];
+
+// ------------------------------------------------------------- respond (FR4.3)
+
+export const responseSchema = z.object({
+  message: z.string().trim().min(1, "Write a short reply").max(300, "The reply can be at most 300 characters"),
+});
+
+/**
+ * Respond to a post (FR4.3, US4.3): opens a connection request to the author carrying the post,
+ * with the same limits, cooldown and block rules as any request (FR3.1).
+ */
+export async function respondToPost(responder: { id: string; name: string }, postId: string, message: string, now = new Date()) {
+  const post = await db.post.findFirst({
+    where: { id: postId, author: { status: UserStatus.ACTIVE, deletedAt: null } },
+    select: { id: true, authorId: true, title: true, status: true, expiresAt: true },
+  });
+  if (!post) throw notFound("This post could not be found.");
+  if (post.authorId === responder.id) throw badRequest("You cannot respond to your own post.");
+  if (post.status !== PostStatus.OPEN || post.expiresAt <= now) throw conflict("This post is closed and no longer takes responses.");
+  if (await db.postResponse.findUnique({ where: { postId_responderId: { postId, responderId: responder.id } } })) {
+    throw conflict("You already responded to this post.");
+  }
+
+  const { connection, remaining } = await sendRequest(
+    responder,
+    { recipientId: post.authorId, note: message, originPostId: post.id, postTitle: post.title },
+    now,
+  );
+  try {
+    const response = await db.postResponse.create({
+      data: { postId, responderId: responder.id, message, connectionId: connection.id, createdAt: now },
+    });
+    return { response, connection, remaining };
+  } catch (err) {
+    // Responded twice at the same moment: keep one response and drop the extra request
+    await db.connection.delete({ where: { id: connection.id } }).catch(() => {});
+    if (typeof err === "object" && err && "code" in err && err.code === "P2002") throw conflict("You already responded to this post.");
+    throw err;
+  }
+}
