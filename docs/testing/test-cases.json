@@ -1,121 +1,1499 @@
 {
   "$comment": "Sprint 1 test cases, written from the acceptance criteria. Course template columns. Fill 'actual' and 'result' only from real test runs. 'automated' names the test file that covers the case, once it exists.",
   "cases": [
-    { "id": "TC-001", "req": "FR1.1", "feature": "Microsoft sign-in", "scenario": "First sign-in with a verified IBA Microsoft account creates the account and opens profile setup (US1.1)", "type": "Positive", "pre": "Microsoft account on khi.iba.edu.pk; no IBA Connect account yet", "steps": ["Open /sign-in", "Click \"Sign in with Microsoft (IBA)\"", "Sign in at Microsoft and accept"], "data": "student.test@khi.iba.edu.pk", "expected": "Signed in, account created, redirected to profile setup", "actual": "", "result": "" },
-    { "id": "TC-002", "req": "FR1.1", "feature": "Microsoft sign-in", "scenario": "Microsoft account outside the IBA domain is refused (US1.1, NFR8)", "type": "Negative", "pre": "Microsoft account on another domain", "steps": ["Open /sign-in", "Click \"Sign in with Microsoft (IBA)\"", "Sign in at Microsoft"], "data": "someone@outlook.com", "expected": "Access refused with a clear message; no member record is created", "actual": "", "result": "" },
-    { "id": "TC-003", "req": "FR1.1", "feature": "Microsoft sign-in", "scenario": "Returning member with a finished profile goes straight to the dashboard", "type": "Positive", "pre": "Member signed up with Microsoft and finished profile setup", "steps": ["Open /sign-in", "Click \"Sign in with Microsoft (IBA)\"", "Sign in at Microsoft"], "data": "Existing IBA account", "expected": "Dashboard opens", "actual": "", "result": "" },
-
-    { "id": "TC-004", "req": "FR1.2", "feature": "Email registration", "scenario": "Register with email and password; a verification email is sent (US1.2)", "type": "Positive", "pre": "Email not registered", "steps": ["Open /register", "Fill in name, email, password and confirmation", "Click Register"], "data": "new.member@khi.iba.edu.pk / Str0ng!Pass", "expected": "Message asks to check email; verification email arrives", "actual": "", "result": "" },
-    { "id": "TC-005", "req": "FR1.2", "feature": "Email registration", "scenario": "Weak password is rejected", "type": "Negative", "pre": "Email not registered", "steps": ["Open /register", "Enter a 5-character password", "Click Register"], "data": "abc12", "expected": "Error explains the password rules; no account created", "actual": "", "result": "" },
-    { "id": "TC-006", "req": "FR1.2", "feature": "Email registration", "scenario": "Unverified account cannot use the platform (US1.2)", "type": "Negative", "pre": "Registered but email not verified", "steps": ["Open /sign-in", "Enter email and password", "Click Sign in with Email"], "data": "Unverified account", "expected": "Asked to verify email first; dashboard not shown", "actual": "", "result": "" },
-    { "id": "TC-007", "req": "FR1.2", "feature": "Email registration", "scenario": "Verification link verifies the account and opens profile setup", "type": "Positive", "pre": "Registered; verification email received", "steps": ["Click the link in the verification email"], "data": "Verification link", "expected": "Email verified; profile setup opens", "actual": "", "result": "" },
-    { "id": "TC-008", "req": "FR1.2", "feature": "Email registration", "scenario": "Wrong password is refused", "type": "Negative", "pre": "Verified account", "steps": ["Open /sign-in", "Enter the email and a wrong password", "Click Sign in with Email"], "data": "Wrong password", "expected": "\"Incorrect email or password\"; not signed in", "actual": "", "result": "" },
-    { "id": "TC-009", "req": "FR1.2", "feature": "Email registration", "scenario": "Repeated failed sign-ins are rate-limited (NFR20)", "type": "Negative", "pre": "None", "steps": ["Submit a wrong password 11 times within 15 minutes"], "data": "Wrong password x11", "expected": "11th attempt refused with \"Too many attempts\" and a wait time", "actual": "", "result": "" },
-    { "id": "TC-010", "req": "FR1.2", "feature": "Email registration", "scenario": "Passwords are stored as bcrypt hashes (US1.2, NFR6)", "type": "Positive", "pre": "Account registered", "steps": ["Inspect the account's stored password in Supabase Auth"], "data": "Registered account", "expected": "Only a bcrypt hash ($2a$/$2b$) is stored, never the plain password", "actual": "", "result": "" },
-    { "id": "TC-011", "req": "FR1.2", "feature": "Password reset", "scenario": "Forgot password sends a reset email (US1.3)", "type": "Positive", "pre": "Verified account", "steps": ["Open /forgot-password", "Enter the registered email", "Submit"], "data": "Registered email", "expected": "Confirmation shown; reset email arrives", "actual": "", "result": "" },
-    { "id": "TC-012", "req": "FR1.2", "feature": "Password reset", "scenario": "Reset link sets a new password that works for sign-in", "type": "Positive", "pre": "Reset email received", "steps": ["Open the reset link", "Enter and confirm a new password", "Sign in with the new password"], "data": "N3w!Passw0rd", "expected": "Password changed; sign-in with the new password succeeds and the old one fails", "actual": "", "result": "" },
-    { "id": "TC-013", "req": "FR1.2", "feature": "Change password", "scenario": "Signed-in member changes their password (US1.3)", "type": "Positive", "pre": "Signed in", "steps": ["Open Settings", "Enter the new password twice", "Save"], "data": "Ch4nged!Pass", "expected": "Saved; later sign-ins use the new password", "actual": "", "result": "" },
-    { "id": "TC-014", "req": "FR1.2", "feature": "Change password", "scenario": "Mismatched confirmation is rejected", "type": "Negative", "pre": "Signed in", "steps": ["Open Settings", "Enter two different passwords", "Save"], "data": "Pass1!aaaa / Pass2!bbbb", "expected": "Error \"Passwords do not match\"; password unchanged", "actual": "", "result": "" },
-
-    { "id": "TC-015", "req": "FR1.3", "feature": "Alumni verification", "scenario": "Valid administration code verifies an alumnus (US1.4)", "type": "Positive", "pre": "Admin issued an active code; alumnus registered with a personal email", "steps": ["Open /verify-alumni", "Enter the code", "Submit"], "data": "Active code", "expected": "Account verified as alumnus; code marked as claimed", "actual": "", "result": "" },
-    { "id": "TC-016", "req": "FR1.3", "feature": "Alumni verification", "scenario": "Personal email on the alumni list verifies an alumnus", "type": "Positive", "pre": "Email is on the uploaded alumni list", "steps": ["Open /verify-alumni", "Choose personal email", "Submit"], "data": "alumnus@example.test", "expected": "Account verified as alumnus", "actual": "", "result": "" },
-    { "id": "TC-017", "req": "FR1.3", "feature": "Alumni verification", "scenario": "Invalid, expired or revoked code is refused", "type": "Negative", "pre": "Registered personal-email account", "steps": ["Open /verify-alumni", "Enter the code", "Submit"], "data": "Unknown / expired / revoked code", "expected": "Verification refused; no alumnus access", "actual": "", "result": "" },
-    { "id": "TC-018", "req": "FR1.3", "feature": "Alumni verification", "scenario": "Code already claimed by someone else is refused", "type": "Negative", "pre": "Code claimed by another member", "steps": ["Open /verify-alumni", "Enter the claimed code", "Submit"], "data": "Claimed code", "expected": "Verification refused", "actual": "", "result": "" },
-
-    { "id": "TC-019", "req": "FR1.4", "feature": "Profile", "scenario": "Profile setup with all required fields (US1.5)", "type": "Positive", "pre": "New verified member", "steps": ["Fill in name, batch, programme, department, semester, bio and at least one skill", "Optionally add courses", "Click Finish"], "data": "Valid profile", "expected": "Profile saved; member appears in the directory; dashboard opens", "actual": "", "result": "" },
-    { "id": "TC-020", "req": "FR1.4", "feature": "Profile", "scenario": "Profile cannot be finished without a required field", "type": "Negative", "pre": "New verified member", "steps": ["Fill in everything except skills", "Click Finish"], "data": "No skills", "expected": "Error on the skills field; profile not finished", "actual": "", "result": "" },
-    { "id": "TC-021", "req": "FR1.4", "feature": "Profile", "scenario": "Bio longer than 500 characters is rejected", "type": "Negative", "pre": "Editing profile", "steps": ["Enter a 501-character bio", "Save"], "data": "501 characters", "expected": "Error shows the 500-character limit; nothing saved", "actual": "", "result": "" },
-    { "id": "TC-022", "req": "FR1.4", "feature": "Profile", "scenario": "Edited profile appears on the profile and in search (US1.6)", "type": "Positive", "pre": "Finished profile", "steps": ["Open Edit profile", "Change bio and add a skill", "Save", "Search for the new skill"], "data": "Skill \"Figma\"", "expected": "Changes on the profile page and in search results", "actual": "", "result": "" },
-    { "id": "TC-023", "req": "FR1.4", "feature": "Profile", "scenario": "Image avatar is uploaded and shown (US1.6)", "type": "Positive", "pre": "Finished profile", "steps": ["Open Edit profile", "Upload a PNG under 2 MB", "Save"], "data": "avatar.png", "expected": "Avatar shown on profile and directory card", "actual": "", "result": "" },
-    { "id": "TC-024", "req": "FR1.4", "feature": "Profile", "scenario": "Non-image avatar is rejected (US1.6)", "type": "Negative", "pre": "Finished profile", "steps": ["Open Edit profile", "Upload a PDF as avatar"], "data": "file.pdf", "expected": "Error \"Only image files\"; avatar unchanged", "actual": "", "result": "" },
-    { "id": "TC-025", "req": "FR1.4", "feature": "Profile", "scenario": "Alumnus adds field and company (US1.7)", "type": "Positive", "pre": "Verified alumnus", "steps": ["Open Edit profile", "Enter field and company", "Save"], "data": "Banking / Contoso Bank", "expected": "Shown on profile; usable as alumni filters", "actual": "", "result": "" },
-
-    { "id": "TC-026", "req": "FR1.5", "feature": "Available to advise", "scenario": "Turning advising on with courses shows the badge (US1.8)", "type": "Positive", "pre": "Profile lists CSE341", "steps": ["Open Edit profile", "Turn on Available to advise", "Select CSE341", "Save"], "data": "CSE341", "expected": "Badge on profile and search results; matches the advise filter for CSE341", "actual": "", "result": "" },
-    { "id": "TC-027", "req": "FR1.5", "feature": "Available to advise", "scenario": "Turning advising off removes the badge (US1.8)", "type": "Positive", "pre": "Advising is on", "steps": ["Open Edit profile", "Turn off Available to advise", "Save"], "data": "-", "expected": "Badge removed; no longer matches the advise filter", "actual": "", "result": "" },
-
-    { "id": "TC-028", "req": "FR1.6", "feature": "Sign out and sessions", "scenario": "Sign out ends the session", "type": "Positive", "pre": "Signed in", "steps": ["Open the account menu", "Click Sign out", "Open /dashboard"], "data": "-", "expected": "Sign-in page shown; dashboard needs sign-in again", "actual": "", "result": "" },
-    { "id": "TC-029", "req": "FR1.6", "feature": "Sign out and sessions", "scenario": "Signed-out visitor cannot open member pages", "type": "Negative", "pre": "Not signed in", "steps": ["Open /dashboard, /directory and /api/v1/members directly"], "data": "-", "expected": "Pages redirect to /sign-in; API returns 401", "actual": "", "result": "" },
-    { "id": "TC-030", "req": "FR1.6", "feature": "Sign out and sessions", "scenario": "Suspended member is signed out on the next request", "type": "Negative", "pre": "Member signed in; admin sets status to suspended", "steps": ["Reload any page"], "data": "Suspended member", "expected": "Signed out with a message that the account is suspended", "actual": "", "result": "" },
-    { "id": "TC-031", "req": "FR1.6", "feature": "Sign out and sessions", "scenario": "Idle session expires", "type": "Negative", "pre": "Signed in; idle longer than the session limit in the test plan", "steps": ["Open any page after the idle period"], "data": "-", "expected": "Asked to sign in again", "actual": "", "result": "" },
-
-    { "id": "TC-032", "req": "FR1.7", "feature": "Dashboard", "scenario": "Dashboard shows pending requests, unread messages, open posts and shortcuts", "type": "Positive", "pre": "Member with 2 pending requests, 1 unread message, 1 open post", "steps": ["Sign in"], "data": "Seeded activity", "expected": "Counts 2, 1 and 1 shown with links to each list", "actual": "", "result": "" },
-    { "id": "TC-033", "req": "FR1.7", "feature": "Dashboard", "scenario": "Every main screen is within three clicks of the dashboard (NFR14)", "type": "Positive", "pre": "Signed in", "steps": ["From the dashboard, open Directory, Need Board, Messages, Requests, Settings and Profile, counting clicks"], "data": "-", "expected": "Each screen reached in three clicks or fewer", "actual": "", "result": "" },
-
-    { "id": "TC-034", "req": "FR1.8", "feature": "Deactivate or delete", "scenario": "Deactivated profile leaves the directory", "type": "Positive", "pre": "Signed in", "steps": ["Open Settings", "Click Deactivate and confirm", "Search for the member from another account"], "data": "-", "expected": "Signed out; member no longer appears in the directory", "actual": "", "result": "" },
-    { "id": "TC-035", "req": "FR1.8", "feature": "Deactivate or delete", "scenario": "Deleted account is removed and its messages anonymised", "type": "Positive", "pre": "Member with an accepted connection and messages", "steps": ["Open Settings", "Click Delete account and confirm", "Open the old chat from the other account"], "data": "-", "expected": "Account removed; messages show \"Deleted member\"; cannot sign in", "actual": "", "result": "" },
-    { "id": "TC-036", "req": "FR1.8", "feature": "Deactivate or delete", "scenario": "Cancelling the confirmation changes nothing", "type": "Negative", "pre": "Signed in", "steps": ["Open Settings", "Click Delete account", "Click Cancel"], "data": "-", "expected": "Account unchanged", "actual": "", "result": "" },
-
-    { "id": "TC-037", "req": "FR1.9", "feature": "Admin: alumni codes", "scenario": "Admin creates an alumni code", "type": "Positive", "pre": "Signed in as admin", "steps": ["Open Admin > Alumni codes", "Click New code, set an expiry", "Save"], "data": "Expiry in 30 days", "expected": "Code listed as active; audit log entry added", "actual": "", "result": "" },
-    { "id": "TC-038", "req": "FR1.9", "feature": "Admin: alumni codes", "scenario": "Revoked code can no longer be used", "type": "Positive", "pre": "Active unclaimed code", "steps": ["Revoke the code", "Try it on /verify-alumni"], "data": "Revoked code", "expected": "Code shown as revoked; verification refused", "actual": "", "result": "" },
-    { "id": "TC-039", "req": "FR1.9", "feature": "Admin: alumni codes", "scenario": "Admin uploads the alumni list", "type": "Positive", "pre": "Signed in as admin", "steps": ["Open Admin > Alumni list", "Upload a CSV with email, name and batch"], "data": "alumni.csv (3 rows)", "expected": "3 entries stored; duplicates skipped and reported", "actual": "", "result": "" },
-    { "id": "TC-040", "req": "FR1.9", "feature": "Admin: alumni codes", "scenario": "Non-admin cannot open the admin panel (FR8.5)", "type": "Negative", "pre": "Signed in as a student", "steps": ["Open /admin", "Call POST /api/v1/admin/alumni-codes"], "data": "-", "expected": "Page refused; API returns 403", "actual": "", "result": "" },
-
-    { "id": "TC-041", "req": "FR1.10", "feature": "Admin: course list", "scenario": "Admin adds a course", "type": "Positive", "pre": "Signed in as admin", "steps": ["Open Admin > Courses", "Add code, title and department", "Save"], "data": "CSE450 Cloud Computing", "expected": "Course offered in profile and post pickers", "actual": "", "result": "" },
-    { "id": "TC-042", "req": "FR1.10", "feature": "Admin: course list", "scenario": "Retired course is no longer offered but stays on existing profiles", "type": "Positive", "pre": "A member lists the course", "steps": ["Retire the course", "Open the course picker", "Open the member's profile"], "data": "CSE450", "expected": "Not in the picker; still on the existing profile", "actual": "", "result": "" },
-    { "id": "TC-043", "req": "FR1.10", "feature": "Admin: course list", "scenario": "Duplicate course code is rejected", "type": "Negative", "pre": "Course CSE341 exists", "steps": ["Add a course with code CSE341"], "data": "CSE341", "expected": "Error \"Course code already exists\"", "actual": "", "result": "" },
-
-    { "id": "TC-044", "req": "FR2.1", "feature": "Directory", "scenario": "Paginated directory with links to profiles (US2.1)", "type": "Positive", "pre": "Signed in; 60 seeded members", "steps": ["Open /directory", "Go to page 2", "Click a member"], "data": "Seed data", "expected": "Members listed page by page; the member's profile opens", "actual": "", "result": "" },
-    { "id": "TC-045", "req": "FR2.1", "feature": "Directory", "scenario": "No contact details in the directory or on unconnected profiles (US2.1, US2.6, NFR10)", "type": "Negative", "pre": "Signed in; not connected to the member", "steps": ["Open /directory", "Open a member's profile", "Call GET /api/v1/members/{id}"], "data": "-", "expected": "No email anywhere in the page or API response", "actual": "", "result": "" },
-    { "id": "TC-046", "req": "FR2.1", "feature": "Directory", "scenario": "Profile page shows the profile details (US2.6)", "type": "Positive", "pre": "Signed in", "steps": ["Open a member's profile"], "data": "Seeded member", "expected": "Name, batch, programme, department, bio, skills, courses and advise badge shown", "actual": "", "result": "" },
-
-    { "id": "TC-047", "req": "FR2.2", "feature": "Search", "scenario": "Search by skill (US2.2)", "type": "Positive", "pre": "Signed in", "steps": ["Type \"Python\" in search"], "data": "Python", "expected": "Only members with the Python skill (or the word in their name or course)", "actual": "", "result": "" },
-    { "id": "TC-048", "req": "FR2.2", "feature": "Search", "scenario": "Search by course code", "type": "Positive", "pre": "Signed in", "steps": ["Type \"CSE341\" in search"], "data": "CSE341", "expected": "Members who listed CSE341", "actual": "", "result": "" },
-    { "id": "TC-049", "req": "FR2.2", "feature": "Search", "scenario": "No matches shows an empty state", "type": "Negative", "pre": "Signed in", "steps": ["Type a word nobody has"], "data": "zzqxv", "expected": "\"No members found\" with a way to clear the search", "actual": "", "result": "" },
-    { "id": "TC-050", "req": "FR2.2", "feature": "Search", "scenario": "Search responds within 2 s at the 95th percentile on 1,000 members (NFR1)", "type": "Positive", "pre": "Database seeded with 1,000 members", "steps": ["Run 100 searches with mixed keywords", "Record response times"], "data": "SEED_MEMBER_COUNT=1000", "expected": "95th percentile under 2 s", "actual": "", "result": "" },
-
-    { "id": "TC-051", "req": "FR2.3", "feature": "Filters", "scenario": "Course plus advise filter finds advisers for that course (US2.4)", "type": "Positive", "pre": "Signed in", "steps": ["Filter course = CSE341", "Turn on Available to advise"], "data": "CSE341", "expected": "Only advisers who listed CSE341, each with the badge", "actual": "", "result": "" },
-    { "id": "TC-052", "req": "FR2.3", "feature": "Filters", "scenario": "Combined filters match all of them; clearing shows everyone (US2.3)", "type": "Positive", "pre": "Signed in", "steps": ["Filter batch 2023 and department Computer Science", "Clear filters"], "data": "2023 / Computer Science", "expected": "Results match both filters; full directory after clearing", "actual": "", "result": "" },
-    { "id": "TC-053", "req": "FR2.3", "feature": "Filters", "scenario": "Alumni field and company filters (US2.5)", "type": "Positive", "pre": "Signed in", "steps": ["Show alumni", "Filter field = Banking"], "data": "Banking", "expected": "Only alumni in Banking", "actual": "", "result": "" },
-
-    { "id": "TC-054", "req": "FR3.1", "feature": "Connection requests", "scenario": "Send a request with a note (US3.1)", "type": "Positive", "pre": "Signed in; not connected to the member", "steps": ["Open the member's profile", "Click Connect", "Write a note", "Send"], "data": "\"Can you help with CSE341?\"", "expected": "Pending request in Outgoing; recipient gets an email", "actual": "", "result": "" },
-    { "id": "TC-055", "req": "FR3.1", "feature": "Connection requests", "scenario": "Note longer than 300 characters is rejected", "type": "Negative", "pre": "Connect pop-up open", "steps": ["Enter a 301-character note", "Send"], "data": "301 characters", "expected": "Error shows the limit; nothing sent", "actual": "", "result": "" },
-    { "id": "TC-056", "req": "FR3.1", "feature": "Connection requests", "scenario": "Daily limit blocks the 11th request (US3.2)", "type": "Negative", "pre": "10 requests sent today", "steps": ["Send another request"], "data": "-", "expected": "Blocked with an explanation of the daily limit", "actual": "", "result": "" },
-    { "id": "TC-057", "req": "FR3.1", "feature": "Connection requests", "scenario": "Asking the same person again during the cooldown is blocked (US3.2)", "type": "Negative", "pre": "Request to this member was declined recently", "steps": ["Send a new request to the same member"], "data": "-", "expected": "Blocked; told when they can ask again", "actual": "", "result": "" },
-    { "id": "TC-058", "req": "FR3.1", "feature": "Connection requests", "scenario": "Cannot request someone already pending or connected", "type": "Negative", "pre": "Pending request exists", "steps": ["Open the profile", "Click Connect"], "data": "-", "expected": "Button shows \"Pending\"; API refuses a duplicate", "actual": "", "result": "" },
-
-    { "id": "TC-059", "req": "FR3.2", "feature": "Accept or decline", "scenario": "Accepting enables chat for both (US3.3)", "type": "Positive", "pre": "Incoming request", "steps": ["Open Requests > Incoming", "Click Accept"], "data": "-", "expected": "Connection created; both members can open the chat", "actual": "", "result": "" },
-    { "id": "TC-060", "req": "FR3.2", "feature": "Accept or decline", "scenario": "Declining keeps chat disabled (US3.3)", "type": "Positive", "pre": "Incoming request", "steps": ["Click Decline"], "data": "-", "expected": "Requester sees Declined; no chat", "actual": "", "result": "" },
-    { "id": "TC-061", "req": "FR3.2", "feature": "Accept or decline", "scenario": "Only the recipient can accept a request", "type": "Negative", "pre": "Request from A to B", "steps": ["As A (or C), call POST /api/v1/connections/{id}/accept"], "data": "-", "expected": "Refused (403/404); request still pending", "actual": "", "result": "" },
-
-    { "id": "TC-062", "req": "FR3.3", "feature": "Requests inbox", "scenario": "Inbox switches between incoming, outgoing and accepted (US3.4)", "type": "Positive", "pre": "One request of each kind", "steps": ["Open /requests", "Switch tabs"], "data": "-", "expected": "Each tab lists the right requests with person, note and status", "actual": "", "result": "" },
-
-    { "id": "TC-063", "req": "FR3.4", "feature": "Private chat", "scenario": "Connected members exchange messages in order (US3.5)", "type": "Positive", "pre": "Accepted connection", "steps": ["Open the chat", "Send 3 messages from each side"], "data": "Short texts", "expected": "Messages shown in order with times on both sides", "actual": "", "result": "" },
-    { "id": "TC-064", "req": "FR3.4", "feature": "Private chat", "scenario": "Messaging without an accepted connection is refused (US3.5)", "type": "Negative", "pre": "Not connected (or request pending)", "steps": ["Call POST /api/v1/connections/{id}/messages"], "data": "\"Hello\"", "expected": "Refused; no message stored", "actual": "", "result": "" },
-    { "id": "TC-065", "req": "FR3.4", "feature": "Private chat", "scenario": "Unread indicator clears when the thread is opened (US3.6)", "type": "Positive", "pre": "Unread message", "steps": ["See the badge", "Open the thread"], "data": "-", "expected": "Badge shown before; messages marked read and badge cleared after", "actual": "", "result": "" },
-
-    { "id": "TC-066", "req": "FR3.5", "feature": "Contact visibility", "scenario": "Email hidden before the connection is accepted (US3.7)", "type": "Negative", "pre": "Request pending", "steps": ["Open the other member's profile", "Check the API response"], "data": "-", "expected": "No email anywhere", "actual": "", "result": "" },
-    { "id": "TC-067", "req": "FR3.5", "feature": "Contact visibility", "scenario": "Email visible to both after acceptance (US3.7)", "type": "Positive", "pre": "Connection accepted", "steps": ["Each member opens the other's profile"], "data": "-", "expected": "Each sees the other's email", "actual": "", "result": "" },
-
-    { "id": "TC-068", "req": "FR3.6", "feature": "Notifications", "scenario": "New request sends an email to the recipient", "type": "Positive", "pre": "Brevo configured", "steps": ["Send a connection request"], "data": "Recipient with a real inbox", "expected": "Email with the requester's name and a link to Requests", "actual": "", "result": "" },
-    { "id": "TC-069", "req": "FR3.6", "feature": "Notifications", "scenario": "Menu badges show unread requests and messages", "type": "Positive", "pre": "1 pending request, 2 unread messages", "steps": ["Open any page"], "data": "-", "expected": "Requests badge 1, Messages badge 2", "actual": "", "result": "" },
-
-    { "id": "TC-070", "req": "FR3.7", "feature": "Block", "scenario": "Member blocks another member", "type": "Positive", "pre": "A and B are members", "steps": ["As A, open B's profile", "Click Block and confirm", "As B, open A's profile and click Connect"], "data": "-", "expected": "Block saved; B's request is refused", "actual": "", "result": "" },
-    { "id": "TC-071", "req": "FR3.7", "feature": "Block", "scenario": "Blocked member's messages are refused", "type": "Negative", "pre": "A and B connected; A blocks B", "steps": ["As B, send a message to A"], "data": "\"Hi\"", "expected": "Message refused", "actual": "", "result": "" },
-
-    { "id": "TC-072", "req": "FR3.8", "feature": "Chat rules", "scenario": "Message longer than 2,000 characters is rejected", "type": "Negative", "pre": "Accepted connection", "steps": ["Paste 2,001 characters", "Send"], "data": "2,001 characters", "expected": "Error shows the limit; nothing sent", "actual": "", "result": "" },
-    { "id": "TC-073", "req": "FR3.8", "feature": "Chat rules", "scenario": "Empty message is not sent", "type": "Negative", "pre": "Accepted connection", "steps": ["Send with an empty or spaces-only box"], "data": "\"   \"", "expected": "Send disabled or refused", "actual": "", "result": "" },
-    { "id": "TC-074", "req": "FR3.8", "feature": "Chat rules", "scenario": "New messages appear without reloading", "type": "Positive", "pre": "Both members have the chat open", "steps": ["A sends a message", "Watch B's screen"], "data": "-", "expected": "Message appears on B's screen within the polling interval (5 s)", "actual": "", "result": "" },
-
-    { "id": "TC-075", "req": "FR4.1", "feature": "Need Board", "scenario": "Create a post with type, title, body and course tag (US4.1)", "type": "Positive", "pre": "Signed in", "steps": ["Open /board/new", "Choose Study partner, fill title and body, tag CSE341", "Publish"], "data": "\"CSE341 study buddy\"", "expected": "Post open on the board for all members; expires in 14 days", "actual": "", "result": "" },
-    { "id": "TC-076", "req": "FR4.1", "feature": "Need Board", "scenario": "Post without a title is rejected", "type": "Negative", "pre": "Signed in", "steps": ["Leave the title empty", "Publish"], "data": "-", "expected": "Error on the title; not published", "actual": "", "result": "" },
-    { "id": "TC-077", "req": "FR4.2", "feature": "Need Board", "scenario": "Board shows open posts only and filters by type and tag (US4.2)", "type": "Positive", "pre": "Open, closed and expired posts exist", "steps": ["Open /board", "Filter type = Course advice and tag = CSE341"], "data": "-", "expected": "Only open posts; filtered list matches both", "actual": "", "result": "" },
-    { "id": "TC-078", "req": "FR4.3", "feature": "Need Board", "scenario": "Responding opens a connection request linked to the post (US4.3)", "type": "Positive", "pre": "Another member's open post", "steps": ["Click Respond", "Write a message", "Send"], "data": "\"I can help\"", "expected": "Pending request with the post context; the poster sees the response", "actual": "", "result": "" },
-    { "id": "TC-079", "req": "FR4.3", "feature": "Need Board", "scenario": "Responding to your own post is refused", "type": "Negative", "pre": "Own open post", "steps": ["Call POST /api/v1/posts/{id}/responses"], "data": "-", "expected": "Refused", "actual": "", "result": "" },
-    { "id": "TC-080", "req": "FR4.3", "feature": "Need Board", "scenario": "Request limits also apply to responses (US4.3)", "type": "Negative", "pre": "Daily request limit reached", "steps": ["Respond to a post"], "data": "-", "expected": "Blocked with the daily-limit explanation", "actual": "", "result": "" },
-    { "id": "TC-081", "req": "FR4.4", "feature": "Need Board", "scenario": "Closing a post removes it from the board; responses stay visible (US4.4)", "type": "Positive", "pre": "Own open post with a response", "steps": ["Open My post", "Click Close"], "data": "-", "expected": "Post leaves the board; author still sees the response", "actual": "", "result": "" },
-    { "id": "TC-082", "req": "FR4.4", "feature": "Need Board", "scenario": "Post expires after 14 days (US4.5)", "type": "Positive", "pre": "Post created 14 days ago (test data)", "steps": ["Open /board", "Open My post as the author"], "data": "createdAt = today - 14 days", "expected": "Not on the board; responses visible to the author", "actual": "", "result": "" },
-    { "id": "TC-083", "req": "FR4.5", "feature": "Need Board", "scenario": "Author edits an open post", "type": "Positive", "pre": "Own open post", "steps": ["Open My post", "Edit title and tag", "Save"], "data": "New title", "expected": "Changes shown on the board", "actual": "", "result": "" },
-    { "id": "TC-084", "req": "FR4.5", "feature": "Need Board", "scenario": "Cannot edit someone else's post or a closed post", "type": "Negative", "pre": "Another member's post; own closed post", "steps": ["Call PATCH /api/v1/posts/{id} for each"], "data": "-", "expected": "Both refused", "actual": "", "result": "" },
-
-    { "id": "TC-085", "req": "NFR13", "feature": "Responsive layout", "scenario": "Primary flows work at 360 px without sideways scrolling", "type": "Positive", "pre": "Phone-sized browser (360 px)", "steps": ["Go through sign-in, profile, search, request, chat and post"], "data": "-", "expected": "Everything usable; bottom menu shown; no horizontal scroll", "actual": "", "result": "" },
-    { "id": "TC-086", "req": "NFR17", "feature": "Accessibility", "scenario": "Primary flows work with the keyboard alone, with visible focus", "type": "Positive", "pre": "Desktop browser", "steps": ["Use Tab, Shift+Tab, Enter and Escape through sign-in, search and chat"], "data": "-", "expected": "Every control reachable; focus ring always visible", "actual": "", "result": "" },
-
-    { "id": "TC-087", "req": "FR1.5", "feature": "Available to advise", "scenario": "Advising cannot be turned on without choosing a course", "type": "Negative", "pre": "Editing profile", "steps": ["Turn on Available to advise", "Select no course", "Save"], "data": "-", "expected": "Error \"Choose at least one course you can advise on\"; not saved", "actual": "", "result": "" },
-    { "id": "TC-088", "req": "FR1.7", "feature": "Dashboard", "scenario": "Signed-out visitor cannot see a dashboard", "type": "Negative", "pre": "Not signed in", "steps": ["Open /dashboard"], "data": "-", "expected": "Redirected to /sign-in", "actual": "", "result": "" },
-    { "id": "TC-089", "req": "FR2.3", "feature": "Filters", "scenario": "Invalid filter values are rejected", "type": "Negative", "pre": "Signed in", "steps": ["Call GET /api/v1/members?batch=abc&semester=99"], "data": "batch=abc, semester=99", "expected": "400 with the invalid fields listed", "actual": "", "result": "" },
-    { "id": "TC-090", "req": "FR3.3", "feature": "Requests inbox", "scenario": "Inbox never shows other members' requests", "type": "Negative", "pre": "Requests exist between B and C", "steps": ["As A, open /requests", "Call GET /api/v1/connections"], "data": "-", "expected": "None of B and C's requests appear", "actual": "", "result": "" },
-    { "id": "TC-091", "req": "FR3.6", "feature": "Notifications", "scenario": "A refused request sends no email", "type": "Negative", "pre": "Daily request limit reached", "steps": ["Try to send another request"], "data": "-", "expected": "Request refused; no email sent", "actual": "", "result": "" },
-    { "id": "TC-092", "req": "FR4.2", "feature": "Need Board", "scenario": "Closed and expired posts never appear on the board, even when filtered", "type": "Negative", "pre": "Closed and expired posts tagged CSE341", "steps": ["Filter tag = CSE341"], "data": "-", "expected": "Only open CSE341 posts listed", "actual": "", "result": "" },
-    { "id": "TC-093", "req": "FR4.4", "feature": "Need Board", "scenario": "Only the author can close a post", "type": "Negative", "pre": "Another member's open post", "steps": ["Call POST /api/v1/posts/{id}/close"], "data": "-", "expected": "Refused; post stays open", "actual": "", "result": "" }
+    {
+      "id": "TC-001",
+      "req": "FR1.1",
+      "feature": "Microsoft sign-in",
+      "scenario": "First sign-in with a verified IBA Microsoft account creates the account and opens profile setup (US1.1)",
+      "type": "Positive",
+      "pre": "Microsoft account on khi.iba.edu.pk; no IBA Connect account yet",
+      "steps": [
+        "Open /sign-in",
+        "Click \"Sign in with Microsoft (IBA)\"",
+        "Sign in at Microsoft and accept"
+      ],
+      "data": "student.test@khi.iba.edu.pk",
+      "expected": "Signed in, account created, redirected to profile setup",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-002",
+      "req": "FR1.1",
+      "feature": "Microsoft sign-in",
+      "scenario": "Microsoft account outside the IBA domain is refused (US1.1, NFR8)",
+      "type": "Negative",
+      "pre": "Microsoft account on another domain",
+      "steps": [
+        "Open /sign-in",
+        "Click \"Sign in with Microsoft (IBA)\"",
+        "Sign in at Microsoft"
+      ],
+      "data": "someone@outlook.com",
+      "expected": "Access refused with a clear message; no member record is created",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-003",
+      "req": "FR1.1",
+      "feature": "Microsoft sign-in",
+      "scenario": "Returning member with a finished profile goes straight to the dashboard",
+      "type": "Positive",
+      "pre": "Member signed up with Microsoft and finished profile setup",
+      "steps": [
+        "Open /sign-in",
+        "Click \"Sign in with Microsoft (IBA)\"",
+        "Sign in at Microsoft"
+      ],
+      "data": "Existing IBA account",
+      "expected": "Dashboard opens",
+      "actual": "Opening / as student@khi.iba.edu.pk redirected to /dashboard, which loaded.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-004",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Register with email and password; a verification email is sent (US1.2)",
+      "type": "Positive",
+      "pre": "Email not registered",
+      "steps": [
+        "Open /register",
+        "Fill in name, email, password and confirmation",
+        "Click Register"
+      ],
+      "data": "new.member@khi.iba.edu.pk / Str0ng!Pass",
+      "expected": "Message asks to check email; verification email arrives",
+      "actual": "Partly run: POST /auth/register returned 201 with \"Check your email for a verification link...\". Arrival of the email still to be checked by hand once Brevo SMTP is set up.",
+      "result": ""
+    },
+    {
+      "id": "TC-005",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Weak password is rejected",
+      "type": "Negative",
+      "pre": "Email not registered",
+      "steps": [
+        "Open /register",
+        "Enter a 5-character password",
+        "Click Register"
+      ],
+      "data": "abc12",
+      "expected": "Error explains the password rules; no account created",
+      "actual": "400 validation_failed: Password must be at least 8 characters long; Password must include an uppercase, lowercase, number, and special character. Accounts created: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-006",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Unverified account cannot use the platform (US1.2)",
+      "type": "Negative",
+      "pre": "Registered but email not verified",
+      "steps": [
+        "Open /sign-in",
+        "Enter email and password",
+        "Click Sign in with Email"
+      ],
+      "data": "Unverified account",
+      "expected": "Asked to verify email first; dashboard not shown",
+      "actual": "Sign-in returned 403 email_not_verified: \"Please verify your email address first.\". Opening /dashboard ended on /sign-in.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-007",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Verification link verifies the account and opens profile setup",
+      "type": "Positive",
+      "pre": "Registered; verification email received",
+      "steps": [
+        "Click the link in the verification email"
+      ],
+      "data": "Verification link",
+      "expected": "Email verified; profile setup opens",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-008",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Wrong password is refused",
+      "type": "Negative",
+      "pre": "Verified account",
+      "steps": [
+        "Open /sign-in",
+        "Enter the email and a wrong password",
+        "Click Sign in with Email"
+      ],
+      "data": "Wrong password",
+      "expected": "\"Incorrect email or password\"; not signed in",
+      "actual": "401: \"Incorrect email or password.\"; session cookies set: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-009",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Repeated failed sign-ins are rate-limited (NFR20)",
+      "type": "Negative",
+      "pre": "None",
+      "steps": [
+        "Submit a wrong password 11 times within 15 minutes"
+      ],
+      "data": "Wrong password x11",
+      "expected": "11th attempt refused with \"Too many attempts\" and a wait time",
+      "actual": "Statuses: 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 429. 11th: \"Too many attempts. Please wait a few minutes and try again.\", Retry-After 886 s.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-010",
+      "req": "FR1.2",
+      "feature": "Email registration",
+      "scenario": "Passwords are stored as bcrypt hashes (US1.2, NFR6)",
+      "type": "Positive",
+      "pre": "Account registered",
+      "steps": [
+        "Inspect the account's stored password in Supabase Auth"
+      ],
+      "data": "Registered account",
+      "expected": "Only a bcrypt hash ($2a$/$2b$) is stored, never the plain password",
+      "actual": "auth.users.encrypted_password starts with \"$2a$10$\" (60 chars); plain-text matches: 0. The app's own tables have no password column.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-011",
+      "req": "FR1.2",
+      "feature": "Password reset",
+      "scenario": "Forgot password sends a reset email (US1.3)",
+      "type": "Positive",
+      "pre": "Verified account",
+      "steps": [
+        "Open /forgot-password",
+        "Enter the registered email",
+        "Submit"
+      ],
+      "data": "Registered email",
+      "expected": "Confirmation shown; reset email arrives",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-012",
+      "req": "FR1.2",
+      "feature": "Password reset",
+      "scenario": "Reset link sets a new password that works for sign-in",
+      "type": "Positive",
+      "pre": "Reset email received",
+      "steps": [
+        "Open the reset link",
+        "Enter and confirm a new password",
+        "Sign in with the new password"
+      ],
+      "data": "N3w!Passw0rd",
+      "expected": "Password changed; sign-in with the new password succeeds and the old one fails",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-013",
+      "req": "FR1.2",
+      "feature": "Change password",
+      "scenario": "Signed-in member changes their password (US1.3)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Open Settings",
+        "Enter the new password twice",
+        "Save"
+      ],
+      "data": "Ch4nged!Pass",
+      "expected": "Saved; later sign-ins use the new password",
+      "actual": "Change returned 200 (\"Password changed.\"). Sign-in with the new password: 200; with the old one: 401.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-014",
+      "req": "FR1.2",
+      "feature": "Change password",
+      "scenario": "Mismatched confirmation is rejected",
+      "type": "Negative",
+      "pre": "Signed in",
+      "steps": [
+        "Open Settings",
+        "Enter two different passwords",
+        "Save"
+      ],
+      "data": "Pass1!aaaa / Pass2!bbbb",
+      "expected": "Error \"Passwords do not match\"; password unchanged",
+      "actual": "Mismatch returned 400: \"Passwords do not match\"; the old password still worked until the real change.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-015",
+      "req": "FR1.3",
+      "feature": "Alumni verification",
+      "scenario": "Valid administration code verifies an alumnus (US1.4)",
+      "type": "Positive",
+      "pre": "Admin issued an active code; alumnus registered with a personal email",
+      "steps": [
+        "Open /verify-alumni",
+        "Enter the code",
+        "Submit"
+      ],
+      "data": "Active code",
+      "expected": "Account verified as alumnus; code marked as claimed",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-016",
+      "req": "FR1.3",
+      "feature": "Alumni verification",
+      "scenario": "Personal email on the alumni list verifies an alumnus",
+      "type": "Positive",
+      "pre": "Email is on the uploaded alumni list",
+      "steps": [
+        "Open /verify-alumni",
+        "Choose personal email",
+        "Submit"
+      ],
+      "data": "alumnus@example.test",
+      "expected": "Account verified as alumnus",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-017",
+      "req": "FR1.3",
+      "feature": "Alumni verification",
+      "scenario": "Invalid, expired or revoked code is refused",
+      "type": "Negative",
+      "pre": "Registered personal-email account",
+      "steps": [
+        "Open /verify-alumni",
+        "Enter the code",
+        "Submit"
+      ],
+      "data": "Unknown / expired / revoked code",
+      "expected": "Verification refused; no alumnus access",
+      "actual": "revoked: 400 \"We could not verify you as an alumnus. Check the code, or ask the IBA Connect team to add your email to the alumni list.\"; expired: 400 \"We could not verify you as an alumnus. Check the code, or ask the IBA Connect team to add your email to the alumni list.\"; unknown: 400 \"We could not verify you as an alumnus. Check the code, or ask the IBA Connect team to add your email to the alumni list.\". No alumnus accounts created.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-018",
+      "req": "FR1.3",
+      "feature": "Alumni verification",
+      "scenario": "Code already claimed by someone else is refused",
+      "type": "Negative",
+      "pre": "Code claimed by another member",
+      "steps": [
+        "Open /verify-alumni",
+        "Enter the claimed code",
+        "Submit"
+      ],
+      "data": "Claimed code",
+      "expected": "Verification refused",
+      "actual": "400 bad_request: \"We could not verify you as an alumnus. Check the code, or ask the IBA Connect team to add your email to the alumni list.\". No account created.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-019",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Profile setup with all required fields (US1.5)",
+      "type": "Positive",
+      "pre": "New verified member",
+      "steps": [
+        "Fill in name, batch, programme, department, semester, bio and at least one skill",
+        "Optionally add courses",
+        "Click Finish"
+      ],
+      "data": "Valid profile",
+      "expected": "Profile saved; member appears in the directory; dashboard opens",
+      "actual": "Before: /dashboard sent the new account to /profile/setup. PUT /profile 200; directory search \"Newbie\" finds them: true; /dashboard then opens (/dashboard).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-020",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Profile cannot be finished without a required field",
+      "type": "Negative",
+      "pre": "New verified member",
+      "steps": [
+        "Fill in everything except skills",
+        "Click Finish"
+      ],
+      "data": "No skills",
+      "expected": "Error on the skills field; profile not finished",
+      "actual": "400: skills: Add at least one skill. Profile finished: false.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-021",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Bio longer than 500 characters is rejected",
+      "type": "Negative",
+      "pre": "Editing profile",
+      "steps": [
+        "Enter a 501-character bio",
+        "Save"
+      ],
+      "data": "501 characters",
+      "expected": "Error shows the 500-character limit; nothing saved",
+      "actual": "400: bio: Bio can be at most 500 characters. Profile finished: false.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-022",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Edited profile appears on the profile and in search (US1.6)",
+      "type": "Positive",
+      "pre": "Finished profile",
+      "steps": [
+        "Open Edit profile",
+        "Change bio and add a skill",
+        "Save",
+        "Search for the new skill"
+      ],
+      "data": "Skill \"Figma\"",
+      "expected": "Changes on the profile page and in search results",
+      "actual": "PUT 200; profile skills: Figma, Python; search \"Figma\" lists the member: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-023",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Image avatar is uploaded and shown (US1.6)",
+      "type": "Positive",
+      "pre": "Finished profile",
+      "steps": [
+        "Open Edit profile",
+        "Upload a PNG under 2 MB",
+        "Save"
+      ],
+      "data": "avatar.png",
+      "expected": "Avatar shown on profile and directory card",
+      "actual": "200; signed URL returned: true (fetch 200); directory card has an avatar: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-024",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Non-image avatar is rejected (US1.6)",
+      "type": "Negative",
+      "pre": "Finished profile",
+      "steps": [
+        "Open Edit profile",
+        "Upload a PDF as avatar"
+      ],
+      "data": "file.pdf",
+      "expected": "Error \"Only image files\"; avatar unchanged",
+      "actual": "400: \"Only image files (PNG, JPEG or WebP) can be used as a profile photo.\"; avatar unchanged: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-025",
+      "req": "FR1.4",
+      "feature": "Profile",
+      "scenario": "Alumnus adds field and company (US1.7)",
+      "type": "Positive",
+      "pre": "Verified alumnus",
+      "steps": [
+        "Open Edit profile",
+        "Enter field and company",
+        "Save"
+      ],
+      "data": "Banking / Contoso Bank",
+      "expected": "Shown on profile; usable as alumni filters",
+      "actual": "Profile shows field \"Banking & Finance\" and company \"Contoso Bank\"; both filters find the alumnus.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-026",
+      "req": "FR1.5",
+      "feature": "Available to advise",
+      "scenario": "Turning advising on with courses shows the badge (US1.8)",
+      "type": "Positive",
+      "pre": "Profile lists CSE341",
+      "steps": [
+        "Open Edit profile",
+        "Turn on Available to advise",
+        "Select CSE341",
+        "Save"
+      ],
+      "data": "CSE341",
+      "expected": "Badge on profile and search results; matches the advise filter for CSE341",
+      "actual": "On 200; matches course=CSE341&advise=1 with adviseCourses [CSE341] (badge source).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-027",
+      "req": "FR1.5",
+      "feature": "Available to advise",
+      "scenario": "Turning advising off removes the badge (US1.8)",
+      "type": "Positive",
+      "pre": "Advising is on",
+      "steps": [
+        "Open Edit profile",
+        "Turn off Available to advise",
+        "Save"
+      ],
+      "data": "-",
+      "expected": "Badge removed; no longer matches the advise filter",
+      "actual": "Off 200; in the advise filter afterwards: false; profile availableToAdvise: false.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-028",
+      "req": "FR1.6",
+      "feature": "Sign out and sessions",
+      "scenario": "Sign out ends the session",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Open the account menu",
+        "Click Sign out",
+        "Open /dashboard"
+      ],
+      "data": "-",
+      "expected": "Sign-in page shown; dashboard needs sign-in again",
+      "actual": "Sign out from the account menu showed /sign-in; opening /dashboard again went to the sign-in page.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-029",
+      "req": "FR1.6",
+      "feature": "Sign out and sessions",
+      "scenario": "Signed-out visitor cannot open member pages",
+      "type": "Negative",
+      "pre": "Not signed in",
+      "steps": [
+        "Open /dashboard, /directory and /api/v1/members directly"
+      ],
+      "data": "-",
+      "expected": "Pages redirect to /sign-in; API returns 401",
+      "actual": "/dashboard -> /sign-in, /directory -> /sign-in, /messages -> /sign-in, /board -> /sign-in, /settings -> /sign-in, /admin -> /sign-in; GET /api/v1/members: 401.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-030",
+      "req": "FR1.6",
+      "feature": "Sign out and sessions",
+      "scenario": "Suspended member is signed out on the next request",
+      "type": "Negative",
+      "pre": "Member signed in; admin sets status to suspended",
+      "steps": [
+        "Reload any page"
+      ],
+      "data": "Suspended member",
+      "expected": "Signed out with a message that the account is suspended",
+      "actual": "API: 403 suspended. Page ended on /sign-in?reason=suspended with message: \"Your account is suspended. Contact the IBA Connect team.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-031",
+      "req": "FR1.6",
+      "feature": "Sign out and sessions",
+      "scenario": "Idle session expires",
+      "type": "Negative",
+      "pre": "Signed in; idle longer than the session limit in the test plan",
+      "steps": [
+        "Open any page after the idle period"
+      ],
+      "data": "-",
+      "expected": "Asked to sign in again",
+      "actual": "Last activity set 8 days ago (limit 7): /dashboard ended on /sign-in?reason=idle.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-032",
+      "req": "FR1.7",
+      "feature": "Dashboard",
+      "scenario": "Dashboard shows pending requests, unread messages, open posts and shortcuts",
+      "type": "Positive",
+      "pre": "Member with 2 pending requests, 1 unread message, 1 open post",
+      "steps": [
+        "Sign in"
+      ],
+      "data": "Seeded activity",
+      "expected": "Counts 2, 1 and 1 shown with links to each list",
+      "actual": "Pending requests 2, unread messages 1, my open posts 1; each tile links to its list.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-033",
+      "req": "FR1.7",
+      "feature": "Dashboard",
+      "scenario": "Every main screen is within three clicks of the dashboard (NFR14)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "From the dashboard, open Directory, Need Board, Messages, Requests, Settings and Profile, counting clicks"
+      ],
+      "data": "-",
+      "expected": "Each screen reached in three clicks or fewer",
+      "actual": "Clicks from the dashboard: Directory 1, Need Board 1, Messages 1, Requests 1, profile 2, settings 2, new post 1. A member profile is 2 clicks (Directory, then a card); a chat is 2 (Messages, then the chat).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-034",
+      "req": "FR1.8",
+      "feature": "Deactivate or delete",
+      "scenario": "Deactivated profile leaves the directory",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Open Settings",
+        "Click Deactivate and confirm",
+        "Search for the member from another account"
+      ],
+      "data": "-",
+      "expected": "Signed out; member no longer appears in the directory",
+      "actual": "In the directory before: true; deactivate 200; after: false; the old session gets 401.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-035",
+      "req": "FR1.8",
+      "feature": "Deactivate or delete",
+      "scenario": "Deleted account is removed and its messages anonymised",
+      "type": "Positive",
+      "pre": "Member with an accepted connection and messages",
+      "steps": [
+        "Open Settings",
+        "Click Delete account and confirm",
+        "Open the old chat from the other account"
+      ],
+      "data": "-",
+      "expected": "Account removed; messages show \"Deleted member\"; cannot sign in",
+      "actual": "Delete 200; peer's chat shows \"Deleted member\": true, old message kept: true; sign-in afterwards: 401; in directory: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-036",
+      "req": "FR1.8",
+      "feature": "Deactivate or delete",
+      "scenario": "Cancelling the confirmation changes nothing",
+      "type": "Negative",
+      "pre": "Signed in",
+      "steps": [
+        "Open Settings",
+        "Click Delete account",
+        "Click Cancel"
+      ],
+      "data": "-",
+      "expected": "Account unchanged",
+      "actual": "Without the \"DELETE\" confirmation: 400; account unchanged (status ACTIVE, not deleted: true). The dialog's Cancel button is in the human checklist.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-037",
+      "req": "FR1.9",
+      "feature": "Admin: alumni codes",
+      "scenario": "Admin creates an alumni code",
+      "type": "Positive",
+      "pre": "Signed in as admin",
+      "steps": [
+        "Open Admin > Alumni codes",
+        "Click New code, set an expiry",
+        "Save"
+      ],
+      "data": "Expiry in 30 days",
+      "expected": "Code listed as active; audit log entry added",
+      "actual": "201 with code IBA-****-****; listed with status \"active\"; audit entries for it: 1.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-038",
+      "req": "FR1.9",
+      "feature": "Admin: alumni codes",
+      "scenario": "Revoked code can no longer be used",
+      "type": "Positive",
+      "pre": "Active unclaimed code",
+      "steps": [
+        "Revoke the code",
+        "Try it on /verify-alumni"
+      ],
+      "data": "Revoked code",
+      "expected": "Code shown as revoked; verification refused",
+      "actual": "Revoked code listed as \"revoked\"; using it: revoked: 400 \"We could not verify you as an alumnus. Check the code, or ask the IBA Connect team to add your email to the alumni list.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-039",
+      "req": "FR1.9",
+      "feature": "Admin: alumni codes",
+      "scenario": "Admin uploads the alumni list",
+      "type": "Positive",
+      "pre": "Signed in as admin",
+      "steps": [
+        "Open Admin > Alumni list",
+        "Upload a CSV with email, name and batch"
+      ],
+      "data": "alumni.csv (3 rows)",
+      "expected": "3 entries stored; duplicates skipped and reported",
+      "actual": "200: added 3, skipped 1, invalid 0 (file had 3 rows plus 1 duplicate). Stored entries: 3.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-040",
+      "req": "FR1.9",
+      "feature": "Admin: alumni codes",
+      "scenario": "Non-admin cannot open the admin panel (FR8.5)",
+      "type": "Negative",
+      "pre": "Signed in as a student",
+      "steps": [
+        "Open /admin",
+        "Call POST /api/v1/admin/alumni-codes"
+      ],
+      "data": "-",
+      "expected": "Page refused; API returns 403",
+      "actual": "GET /api/v1/admin/courses as student: 403. Page /admin: HTTP 200, ended on /admin, admin tools shown: false.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-041",
+      "req": "FR1.10",
+      "feature": "Admin: course list",
+      "scenario": "Admin adds a course",
+      "type": "Positive",
+      "pre": "Signed in as admin",
+      "steps": [
+        "Open Admin > Courses",
+        "Add code, title and department",
+        "Save"
+      ],
+      "data": "CSE450 Cloud Computing",
+      "expected": "Course offered in profile and post pickers",
+      "actual": "201; course picker search \"ETE450\" returns 1 course(s).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-042",
+      "req": "FR1.10",
+      "feature": "Admin: course list",
+      "scenario": "Retired course is no longer offered but stays on existing profiles",
+      "type": "Positive",
+      "pre": "A member lists the course",
+      "steps": [
+        "Retire the course",
+        "Open the course picker",
+        "Open the member's profile"
+      ],
+      "data": "CSE450",
+      "expected": "Not in the picker; still on the existing profile",
+      "actual": "Retire 200; picker results for ETE450: 0; still on the existing profile: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-043",
+      "req": "FR1.10",
+      "feature": "Admin: course list",
+      "scenario": "Duplicate course code is rejected",
+      "type": "Negative",
+      "pre": "Course CSE341 exists",
+      "steps": [
+        "Add a course with code CSE341"
+      ],
+      "data": "CSE341",
+      "expected": "Error \"Course code already exists\"",
+      "actual": "409: \"Course code already exists.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-044",
+      "req": "FR2.1",
+      "feature": "Directory",
+      "scenario": "Paginated directory with links to profiles (US2.1)",
+      "type": "Positive",
+      "pre": "Signed in; 60 seeded members",
+      "steps": [
+        "Open /directory",
+        "Go to page 2",
+        "Click a member"
+      ],
+      "data": "Seed data",
+      "expected": "Members listed page by page; the member's profile opens",
+      "actual": "71 members over 4 pages of 18; pages 1 and 2 overlap: 0. Clicking a card opened /members/ab140a9a-...",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-045",
+      "req": "FR2.1",
+      "feature": "Directory",
+      "scenario": "No contact details in the directory or on unconnected profiles (US2.1, US2.6, NFR10)",
+      "type": "Negative",
+      "pre": "Signed in; not connected to the member",
+      "steps": [
+        "Open /directory",
+        "Open a member's profile",
+        "Call GET /api/v1/members/{id}"
+      ],
+      "data": "-",
+      "expected": "No email anywhere in the page or API response",
+      "actual": "Directory API, directory page and an unconnected profile page contain an @khi.iba.edu.pk address: 0 of 3.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-046",
+      "req": "FR2.1",
+      "feature": "Directory",
+      "scenario": "Profile page shows the profile details (US2.6)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Open a member's profile"
+      ],
+      "data": "Seeded member",
+      "expected": "Name, batch, programme, department, bio, skills, courses and advise badge shown",
+      "actual": "Adviser's profile page shows: name yes, batch yes, programme yes, department yes, bio yes, skills yes, courses yes, badge yes.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-047",
+      "req": "FR2.2",
+      "feature": "Search",
+      "scenario": "Search by skill (US2.2)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Type \"Python\" in search"
+      ],
+      "data": "Python",
+      "expected": "Only members with the Python skill (or the word in their name or course)",
+      "actual": "\"Python\": 12 result(s), all with a Python skill or the word in their name: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-048",
+      "req": "FR2.2",
+      "feature": "Search",
+      "scenario": "Search by course code",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Type \"CSE341\" in search"
+      ],
+      "data": "CSE341",
+      "expected": "Members who listed CSE341",
+      "actual": "\"CSE341\": 12 result(s), 12 of them listed CSE341.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-049",
+      "req": "FR2.2",
+      "feature": "Search",
+      "scenario": "No matches shows an empty state",
+      "type": "Negative",
+      "pre": "Signed in",
+      "steps": [
+        "Type a word nobody has"
+      ],
+      "data": "zzqxv",
+      "expected": "\"No members found\" with a way to clear the search",
+      "actual": "\"No members found.\" shown with a \"Clear the search and filters\" link; clicking it returned to the full directory.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-050",
+      "req": "FR2.2",
+      "feature": "Search",
+      "scenario": "Search responds within 2 s at the 95th percentile on 1,000 members (NFR1)",
+      "type": "Positive",
+      "pre": "Database seeded with 1,000 members",
+      "steps": [
+        "Run 100 searches with mixed keywords",
+        "Record response times"
+      ],
+      "data": "SEED_MEMBER_COUNT=1000",
+      "expected": "95th percentile under 2 s",
+      "actual": "100 searches on 1,000 seeded members (automated integration test on PostgreSQL with the project migrations and search indexes): median 4 ms, 95th percentile 9 ms.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-051",
+      "req": "FR2.3",
+      "feature": "Filters",
+      "scenario": "Course plus advise filter finds advisers for that course (US2.4)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Filter course = CSE341",
+        "Turn on Available to advise"
+      ],
+      "data": "CSE341",
+      "expected": "Only advisers who listed CSE341, each with the badge",
+      "actual": "CSE341 + advise: 1 adviser(s), all advising CSE341: true; includes adviser@: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-052",
+      "req": "FR2.3",
+      "feature": "Filters",
+      "scenario": "Combined filters match all of them; clearing shows everyone (US2.3)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Filter batch 2023 and department Computer Science",
+        "Clear filters"
+      ],
+      "data": "2023 / Computer Science",
+      "expected": "Results match both filters; full directory after clearing",
+      "actual": "batch 2023 + Computer Science: 9 result(s), all matching both: true; without filters: 71.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-053",
+      "req": "FR2.3",
+      "feature": "Filters",
+      "scenario": "Alumni field and company filters (US2.5)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Show alumni",
+        "Filter field = Banking"
+      ],
+      "data": "Banking",
+      "expected": "Only alumni in Banking",
+      "actual": "field=Banking & Finance: 2 result(s), all alumni in that field: true; company=Contoso finds the alumnus: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-054",
+      "req": "FR3.1",
+      "feature": "Connection requests",
+      "scenario": "Send a request with a note (US3.1)",
+      "type": "Positive",
+      "pre": "Signed in; not connected to the member",
+      "steps": [
+        "Open the member's profile",
+        "Click Connect",
+        "Write a note",
+        "Send"
+      ],
+      "data": "\"Can you help with CSE341?\"",
+      "expected": "Pending request in Outgoing; recipient gets an email",
+      "actual": "201 PENDING; in Outgoing with note \"Can you help with CSE341?\" and status PENDING. Email not checked (Brevo not set up).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-055",
+      "req": "FR3.1",
+      "feature": "Connection requests",
+      "scenario": "Note longer than 300 characters is rejected",
+      "type": "Negative",
+      "pre": "Connect pop-up open",
+      "steps": [
+        "Enter a 301-character note",
+        "Send"
+      ],
+      "data": "301 characters",
+      "expected": "Error shows the limit; nothing sent",
+      "actual": "400: \"The note can be at most 300 characters\"; requests stored: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-056",
+      "req": "FR3.1",
+      "feature": "Connection requests",
+      "scenario": "Daily limit blocks the 11th request (US3.2)",
+      "type": "Negative",
+      "pre": "10 requests sent today",
+      "steps": [
+        "Send another request"
+      ],
+      "data": "-",
+      "expected": "Blocked with an explanation of the daily limit",
+      "actual": "Statuses: 201, 201, 201, 201, 201, 201, 201, 201, 201, 201, 429. 11th: \"You can send up to 10 requests a day. Please try again later.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-057",
+      "req": "FR3.1",
+      "feature": "Connection requests",
+      "scenario": "Asking the same person again during the cooldown is blocked (US3.2)",
+      "type": "Negative",
+      "pre": "Request to this member was declined recently",
+      "steps": [
+        "Send a new request to the same member"
+      ],
+      "data": "-",
+      "expected": "Blocked; told when they can ask again",
+      "actual": "Asking again: 429 \"You asked this member recently. You can ask again in 3 days.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-058",
+      "req": "FR3.1",
+      "feature": "Connection requests",
+      "scenario": "Cannot request someone already pending or connected",
+      "type": "Negative",
+      "pre": "Pending request exists",
+      "steps": [
+        "Open the profile",
+        "Click Connect"
+      ],
+      "data": "-",
+      "expected": "Button shows \"Pending\"; API refuses a duplicate",
+      "actual": "Duplicate request: 409 \"You already sent a request to this member.\". Profile page shows the disabled \"Request sent\" button: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-059",
+      "req": "FR3.2",
+      "feature": "Accept or decline",
+      "scenario": "Accepting enables chat for both (US3.3)",
+      "type": "Positive",
+      "pre": "Incoming request",
+      "steps": [
+        "Open Requests > Incoming",
+        "Click Accept"
+      ],
+      "data": "-",
+      "expected": "Connection created; both members can open the chat",
+      "actual": "Accept 200; chat opens for both (200, 200).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-060",
+      "req": "FR3.2",
+      "feature": "Accept or decline",
+      "scenario": "Declining keeps chat disabled (US3.3)",
+      "type": "Positive",
+      "pre": "Incoming request",
+      "steps": [
+        "Click Decline"
+      ],
+      "data": "-",
+      "expected": "Requester sees Declined; no chat",
+      "actual": "Decline 200; requester sees status DECLINED; sending a message: 403.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-061",
+      "req": "FR3.2",
+      "feature": "Accept or decline",
+      "scenario": "Only the recipient can accept a request",
+      "type": "Negative",
+      "pre": "Request from A to B",
+      "steps": [
+        "As A (or C), call POST /api/v1/connections/{id}/accept"
+      ],
+      "data": "-",
+      "expected": "Refused (403/404); request still pending",
+      "actual": "Requester accepting: 403; an unrelated member accepting: 404; status still PENDING.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-062",
+      "req": "FR3.3",
+      "feature": "Requests inbox",
+      "scenario": "Inbox switches between incoming, outgoing and accepted (US3.4)",
+      "type": "Positive",
+      "pre": "One request of each kind",
+      "steps": [
+        "Open /requests",
+        "Switch tabs"
+      ],
+      "data": "-",
+      "expected": "Each tab lists the right requests with person, note and status",
+      "actual": "Counts: incoming 0, outgoing 0, accepted 1. Accepted tab shows E2E Tester with note \"Can you help with CSE341?\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-063",
+      "req": "FR3.4",
+      "feature": "Private chat",
+      "scenario": "Connected members exchange messages in order (US3.5)",
+      "type": "Positive",
+      "pre": "Accepted connection",
+      "steps": [
+        "Open the chat",
+        "Send 3 messages from each side"
+      ],
+      "data": "Short texts",
+      "expected": "Messages shown in order with times on both sides",
+      "actual": "Tester sees one, two, three; peer sees one, two, three; every message has a time.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-064",
+      "req": "FR3.4",
+      "feature": "Private chat",
+      "scenario": "Messaging without an accepted connection is refused (US3.5)",
+      "type": "Negative",
+      "pre": "Not connected (or request pending)",
+      "steps": [
+        "Call POST /api/v1/connections/{id}/messages"
+      ],
+      "data": "\"Hello\"",
+      "expected": "Refused; no message stored",
+      "actual": "Pending connection: 403 \"You can message each other once the connection request is accepted.\"; messages stored: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-065",
+      "req": "FR3.4",
+      "feature": "Private chat",
+      "scenario": "Unread indicator clears when the thread is opened (US3.6)",
+      "type": "Positive",
+      "pre": "Unread message",
+      "steps": [
+        "See the badge",
+        "Open the thread"
+      ],
+      "data": "-",
+      "expected": "Badge shown before; messages marked read and badge cleared after",
+      "actual": "Messages badge before: 1; after opening the chat: none; unread rows left: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-066",
+      "req": "FR3.5",
+      "feature": "Contact visibility",
+      "scenario": "Email hidden before the connection is accepted (US3.7)",
+      "type": "Negative",
+      "pre": "Request pending",
+      "steps": [
+        "Open the other member's profile",
+        "Check the API response"
+      ],
+      "data": "-",
+      "expected": "No email anywhere",
+      "actual": "Before acceptance: profile API email null; e2e.peer's email absent from the profile page: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-067",
+      "req": "FR3.5",
+      "feature": "Contact visibility",
+      "scenario": "Email visible to both after acceptance (US3.7)",
+      "type": "Positive",
+      "pre": "Connection accepted",
+      "steps": [
+        "Each member opens the other's profile"
+      ],
+      "data": "-",
+      "expected": "Each sees the other's email",
+      "actual": "After acceptance the tester sees e2e.peer@khi.iba.edu.pk and the peer sees e2e.tester@khi.iba.edu.pk.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-068",
+      "req": "FR3.6",
+      "feature": "Notifications",
+      "scenario": "New request sends an email to the recipient",
+      "type": "Positive",
+      "pre": "Brevo configured",
+      "steps": [
+        "Send a connection request"
+      ],
+      "data": "Recipient with a real inbox",
+      "expected": "Email with the requester's name and a link to Requests",
+      "actual": "Blocked: the request was created, but no email was sent because BREVO_API_KEY is not set yet (the server logged the failed email). To be run once Brevo is set up.",
+      "result": ""
+    },
+    {
+      "id": "TC-069",
+      "req": "FR3.6",
+      "feature": "Notifications",
+      "scenario": "Menu badges show unread requests and messages",
+      "type": "Positive",
+      "pre": "1 pending request, 2 unread messages",
+      "steps": [
+        "Open any page"
+      ],
+      "data": "-",
+      "expected": "Requests badge 1, Messages badge 2",
+      "actual": "Requests badge 2, Messages badge 1 for student (seeded data: 2 incoming requests, 1 unread message).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-070",
+      "req": "FR3.7",
+      "feature": "Block",
+      "scenario": "Member blocks another member",
+      "type": "Positive",
+      "pre": "A and B are members",
+      "steps": [
+        "As A, open B's profile",
+        "Click Block and confirm",
+        "As B, open A's profile and click Connect"
+      ],
+      "data": "-",
+      "expected": "Block saved; B's request is refused",
+      "actual": "Block 201; blocked member's request: 403 \"You cannot send a request to this member.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-071",
+      "req": "FR3.7",
+      "feature": "Block",
+      "scenario": "Blocked member's messages are refused",
+      "type": "Negative",
+      "pre": "A and B connected; A blocks B",
+      "steps": [
+        "As B, send a message to A"
+      ],
+      "data": "\"Hi\"",
+      "expected": "Message refused",
+      "actual": "Peer blocked the tester (201); tester's message: 403 \"You cannot message this member.\". Unblocked afterwards (204).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-072",
+      "req": "FR3.8",
+      "feature": "Chat rules",
+      "scenario": "Message longer than 2,000 characters is rejected",
+      "type": "Negative",
+      "pre": "Accepted connection",
+      "steps": [
+        "Paste 2,001 characters",
+        "Send"
+      ],
+      "data": "2,001 characters",
+      "expected": "Error shows the limit; nothing sent",
+      "actual": "400: \"A message can be at most 2,000 characters\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-073",
+      "req": "FR3.8",
+      "feature": "Chat rules",
+      "scenario": "Empty message is not sent",
+      "type": "Negative",
+      "pre": "Accepted connection",
+      "steps": [
+        "Send with an empty or spaces-only box"
+      ],
+      "data": "\"   \"",
+      "expected": "Send disabled or refused",
+      "actual": "API: 400. Stored messages stay at 3.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-074",
+      "req": "FR3.8",
+      "feature": "Chat rules",
+      "scenario": "New messages appear without reloading",
+      "type": "Positive",
+      "pre": "Both members have the chat open",
+      "steps": [
+        "A sends a message",
+        "Watch B's screen"
+      ],
+      "data": "-",
+      "expected": "Message appears on B's screen within the polling interval (5 s)",
+      "actual": "Message from the peer appeared on the open chat without a reload, 3.4 s after it was saved (7.0 s after the send started).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-075",
+      "req": "FR4.1",
+      "feature": "Need Board",
+      "scenario": "Create a post with type, title, body and course tag (US4.1)",
+      "type": "Positive",
+      "pre": "Signed in",
+      "steps": [
+        "Open /board/new",
+        "Choose Study partner, fill title and body, tag CSE341",
+        "Publish"
+      ],
+      "data": "\"CSE341 study buddy\"",
+      "expected": "Post open on the board for all members; expires in 14 days",
+      "actual": "201; another member sees it on the board with tag CSE341; expires 14 days after creation.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-076",
+      "req": "FR4.1",
+      "feature": "Need Board",
+      "scenario": "Post without a title is rejected",
+      "type": "Negative",
+      "pre": "Signed in",
+      "steps": [
+        "Leave the title empty",
+        "Publish"
+      ],
+      "data": "-",
+      "expected": "Error on the title; not published",
+      "actual": "400: title: Give your post a title.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-077",
+      "req": "FR4.2",
+      "feature": "Need Board",
+      "scenario": "Board shows open posts only and filters by type and tag (US4.2)",
+      "type": "Positive",
+      "pre": "Open, closed and expired posts exist",
+      "steps": [
+        "Open /board",
+        "Filter type = Course advice and tag = CSE341"
+      ],
+      "data": "-",
+      "expected": "Only open posts; filtered list matches both",
+      "actual": "Board lists 9 open post(s), all unexpired: true. type=study-partner + CSE341: 3 result(s), all matching: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-078",
+      "req": "FR4.3",
+      "feature": "Need Board",
+      "scenario": "Responding opens a connection request linked to the post (US4.3)",
+      "type": "Positive",
+      "pre": "Another member's open post",
+      "steps": [
+        "Click Respond",
+        "Write a message",
+        "Send"
+      ],
+      "data": "\"I can help\"",
+      "expected": "Pending request with the post context; the poster sees the response",
+      "actual": "201; the poster's Incoming has a PENDING request from Sara Adviser \"via\" \"E2E CSE341 study buddy\"; their post shows 1 response(s).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-079",
+      "req": "FR4.3",
+      "feature": "Need Board",
+      "scenario": "Responding to your own post is refused",
+      "type": "Negative",
+      "pre": "Own open post",
+      "steps": [
+        "Call POST /api/v1/posts/{id}/responses"
+      ],
+      "data": "-",
+      "expected": "Refused",
+      "actual": "400: \"You cannot respond to your own post.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-080",
+      "req": "FR4.3",
+      "feature": "Need Board",
+      "scenario": "Request limits also apply to responses (US4.3)",
+      "type": "Negative",
+      "pre": "Daily request limit reached",
+      "steps": [
+        "Respond to a post"
+      ],
+      "data": "-",
+      "expected": "Blocked with the daily-limit explanation",
+      "actual": "Member at the daily limit responding: 429 \"You can send up to 10 requests a day. Please try again later.\".",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-081",
+      "req": "FR4.4",
+      "feature": "Need Board",
+      "scenario": "Closing a post removes it from the board; responses stay visible (US4.4)",
+      "type": "Positive",
+      "pre": "Own open post with a response",
+      "steps": [
+        "Open My post",
+        "Click Close"
+      ],
+      "data": "-",
+      "expected": "Post leaves the board; author still sees the response",
+      "actual": "Close 200; still on the board: false; author's list shows it closed with 1 response(s).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-082",
+      "req": "FR4.4",
+      "feature": "Need Board",
+      "scenario": "Post expires after 14 days (US4.5)",
+      "type": "Positive",
+      "pre": "Post created 14 days ago (test data)",
+      "steps": [
+        "Open /board",
+        "Open My post as the author"
+      ],
+      "data": "createdAt = today - 14 days",
+      "expected": "Not on the board; responses visible to the author",
+      "actual": "createdAt set to today - 14 days: on the board false; author's list shows expired with 1 response(s).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-083",
+      "req": "FR4.5",
+      "feature": "Need Board",
+      "scenario": "Author edits an open post",
+      "type": "Positive",
+      "pre": "Own open post",
+      "steps": [
+        "Open My post",
+        "Edit title and tag",
+        "Save"
+      ],
+      "data": "New title",
+      "expected": "Changes shown on the board",
+      "actual": "Author edit 200; new title on the board: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-084",
+      "req": "FR4.5",
+      "feature": "Need Board",
+      "scenario": "Cannot edit someone else's post or a closed post",
+      "type": "Negative",
+      "pre": "Another member's post; own closed post",
+      "steps": [
+        "Call PATCH /api/v1/posts/{id} for each"
+      ],
+      "data": "-",
+      "expected": "Both refused",
+      "actual": "Someone else's post: 403; own closed post: 409.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-085",
+      "req": "NFR13",
+      "feature": "Responsive layout",
+      "scenario": "Primary flows work at 360 px without sideways scrolling",
+      "type": "Positive",
+      "pre": "Phone-sized browser (360 px)",
+      "steps": [
+        "Go through sign-in, profile, search, request, chat and post"
+      ],
+      "data": "-",
+      "expected": "Everything usable; bottom menu shown; no horizontal scroll",
+      "actual": "Page widths at 360 px: /dashboard 360px, /directory 360px, /members/[id] 360px, /requests 360px, /messages 360px, /board 360px, /board/new 360px, /profile 360px, /settings 360px. Bottom menu visible: true.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-086",
+      "req": "NFR17",
+      "feature": "Accessibility",
+      "scenario": "Primary flows work with the keyboard alone, with visible focus",
+      "type": "Positive",
+      "pre": "Desktop browser",
+      "steps": [
+        "Use Tab, Shift+Tab, Enter and Escape through sign-in, search and chat"
+      ],
+      "data": "-",
+      "expected": "Every control reachable; focus ring always visible",
+      "actual": "",
+      "result": ""
+    },
+    {
+      "id": "TC-087",
+      "req": "FR1.5",
+      "feature": "Available to advise",
+      "scenario": "Advising cannot be turned on without choosing a course",
+      "type": "Negative",
+      "pre": "Editing profile",
+      "steps": [
+        "Turn on Available to advise",
+        "Select no course",
+        "Save"
+      ],
+      "data": "-",
+      "expected": "Error \"Choose at least one course you can advise on\"; not saved",
+      "actual": "400: \"Choose at least one course you can advise on\"; not saved.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-088",
+      "req": "FR1.7",
+      "feature": "Dashboard",
+      "scenario": "Signed-out visitor cannot see a dashboard",
+      "type": "Negative",
+      "pre": "Not signed in",
+      "steps": [
+        "Open /dashboard"
+      ],
+      "data": "-",
+      "expected": "Redirected to /sign-in",
+      "actual": "/dashboard redirected to /sign-in.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-089",
+      "req": "FR2.3",
+      "feature": "Filters",
+      "scenario": "Invalid filter values are rejected",
+      "type": "Negative",
+      "pre": "Signed in",
+      "steps": [
+        "Call GET /api/v1/members?batch=abc&semester=99"
+      ],
+      "data": "batch=abc, semester=99",
+      "expected": "400 with the invalid fields listed",
+      "actual": "400 validation_failed: batch: Batch must be a year. \"semester\" is not a directory filter, so it is ignored.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-090",
+      "req": "FR3.3",
+      "feature": "Requests inbox",
+      "scenario": "Inbox never shows other members' requests",
+      "type": "Negative",
+      "pre": "Requests exist between B and C",
+      "steps": [
+        "As A, open /requests",
+        "Call GET /api/v1/connections"
+      ],
+      "data": "-",
+      "expected": "None of B and C's requests appear",
+      "actual": "1 inbox item(s) across the tabs; items that do not involve the member: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-091",
+      "req": "FR3.6",
+      "feature": "Notifications",
+      "scenario": "A refused request sends no email",
+      "type": "Negative",
+      "pre": "Daily request limit reached",
+      "steps": [
+        "Try to send another request"
+      ],
+      "data": "-",
+      "expected": "Request refused; no email sent",
+      "actual": "Request refused with 429; new email log lines on the server: 0.",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-092",
+      "req": "FR4.2",
+      "feature": "Need Board",
+      "scenario": "Closed and expired posts never appear on the board, even when filtered",
+      "type": "Negative",
+      "pre": "Closed and expired posts tagged CSE341",
+      "steps": [
+        "Filter tag = CSE341"
+      ],
+      "data": "-",
+      "expected": "Only open CSE341 posts listed",
+      "actual": "Database holds 2 closed or expired post(s); none of them in the board or the CSE341 filter (0 found).",
+      "result": "Pass"
+    },
+    {
+      "id": "TC-093",
+      "req": "FR4.4",
+      "feature": "Need Board",
+      "scenario": "Only the author can close a post",
+      "type": "Negative",
+      "pre": "Another member's open post",
+      "steps": [
+        "Call POST /api/v1/posts/{id}/close"
+      ],
+      "data": "-",
+      "expected": "Refused; post stays open",
+      "actual": "Another member closing it: 403; post still OPEN.",
+      "result": "Pass"
+    }
   ]
 }
