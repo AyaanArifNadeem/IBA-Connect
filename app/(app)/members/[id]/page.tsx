@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConnectButton, type RelationshipView } from "@/components/members/connect-button";
+import { BlockMenu } from "@/components/members/block-menu";
 import { ProfileView } from "@/components/members/profile-view";
+import { isBlockedByMe } from "@/lib/services/blocks";
 import { ApiError } from "@/lib/api/errors";
 import { requireCompletedProfile } from "@/lib/auth/pages";
 import { DAY_MS, relationship, type Relationship } from "@/lib/services/connections";
@@ -36,7 +38,14 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
       </Link>
       <ProfileView
         profile={profile}
-        actions={<ConnectButton memberId={profile.id} memberName={profile.name} initial={toView(await relationship(viewer.id, profile.id))} />}
+        actions={
+          profile.isSelf ? null : (
+            <>
+              <ConnectButton memberId={profile.id} memberName={profile.name} initial={toView(await relationship(viewer.id, profile.id))} />
+              <BlockMenu memberId={profile.id} memberName={profile.name} blockedByMe={await isBlockedByMe(viewer.id, profile.id)} />
+            </>
+          )
+        }
       />
     </div>
   );
