@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MemberCard } from "@/components/directory/member-card";
 import { Pager } from "@/components/directory/pager";
 import { SearchBox } from "@/components/directory/search-box";
+import { paramsToObject } from "@/lib/api/validation";
 import { requireCompletedProfile } from "@/lib/auth/pages";
 import { directoryQuerySchema, listMembers } from "@/lib/services/directory";
 
@@ -15,8 +16,8 @@ export default async function DirectoryPage({ searchParams }: PageProps<"/direct
   const params = new URLSearchParams(
     Object.entries(raw).flatMap(([k, v]) => (Array.isArray(v) ? v.map((x) => [k, x]) : v ? [[k, v]] : [])),
   );
-  const parsed = directoryQuerySchema.safeParse(Object.fromEntries(params));
-  const query = parsed.success ? parsed.data : { page: 1 };
+  const parsed = directoryQuerySchema.safeParse(paramsToObject(params));
+  const query = parsed.success ? parsed.data : directoryQuerySchema.parse({});
   const result = await listMembers(member.id, query);
 
   return (

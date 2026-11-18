@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { VerificationMethod } from "@/lib/generated/prisma/enums";
-import { listMembers } from "@/lib/services/directory";
+import { directoryQuerySchema, listMembers } from "@/lib/services/directory";
 import { resetDatabase, testDb } from "./helpers";
 
 // TC-050 / NFR1: 95th percentile under 2 s on a seeded dataset of 1,000 members (NFR2).
@@ -52,7 +52,7 @@ describe("search performance (NFR1, TC-050)", () => {
     const times: number[] = [];
     for (let i = 0; i < 100; i++) {
       const start = performance.now();
-      await listMembers(viewerId, { page: 1 + (i % 3), q: QUERIES[i % QUERIES.length] });
+      await listMembers(viewerId, directoryQuerySchema.parse({ page: 1 + (i % 3), q: QUERIES[i % QUERIES.length] }));
       times.push(performance.now() - start);
     }
     times.sort((a, b) => a - b);
