@@ -8,7 +8,8 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is not set. Copy .env.example to .env.local and fill it in.");
   }
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    // Fail fast instead of hanging when the database cannot be reached, and keep idle sockets alive
+    adapter: new PrismaPg({ connectionString, connectionTimeoutMillis: 10_000, keepAlive: true }),
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 }
