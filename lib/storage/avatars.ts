@@ -30,3 +30,14 @@ export async function avatarUrl(path: string | null | undefined): Promise<string
     .createSignedUrl(path, SIGNED_URL_SECONDS);
   return error ? null : data.signedUrl;
 }
+
+/** Signed links for many avatars in one call (directory pages). Keys are storage paths. */
+export async function avatarUrls(paths: (string | null | undefined)[]): Promise<Map<string, string>> {
+  const wanted = [...new Set(paths.filter((p): p is string => Boolean(p)))];
+  if (wanted.length === 0 || !process.env.SUPABASE_SERVICE_ROLE_KEY) return new Map();
+  const { data, error } = await createAdminClient().storage.from(AVATAR_BUCKET).createSignedUrls(wanted, SIGNED_URL_SECONDS);
+  if (error || !data) return new Map();
+  return new Map(
+    data.flatMap((d) => (d.path && d.signedUrl ? [[d.path, d.signedUrl] as [string, string]] : [])),
+  );
+}
