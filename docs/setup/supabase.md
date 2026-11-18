@@ -55,4 +55,13 @@ The app's own notification emails (for example new connection requests) use the 
 
 ## 5. Microsoft sign-in (FR1.1)
 
-Set up in backlog item US1.1. Until then, email and password sign-in carries the demo.
+1. **Azure Portal → Microsoft Entra ID → App registrations → New registration**
+   - Name: IBA Connect
+   - Supported account types: *Accounts in any organizational directory (multitenant)* (the IBA domain is checked by the app)
+   - Redirect URI (Web): `https://<project-ref>.supabase.co/auth/v1/callback`
+2. **Certificates & secrets → New client secret**: copy the value.
+3. **Token configuration → Add optional claim → ID token**: add `email` and `xms_edov` (verified email domain).
+4. **Supabase → Authentication → Providers → Azure**: enable, paste the Application (client) ID and the secret, Azure tenant URL `https://login.microsoftonline.com/organizations`.
+5. Add `http://localhost:3000/auth/callback` and the Vercel `/auth/callback` URLs to **Redirect URLs** (section 3).
+
+Only accounts whose **verified** email is on `IBA_EMAIL_DOMAIN` get in; everyone else is refused and their auth account is removed. If the IBA tenant needs admin consent, Microsoft shows a consent screen: email and password sign-in still works in the meantime.
