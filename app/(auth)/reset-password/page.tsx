@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { postJson } from '@/lib/client/api';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -17,7 +18,7 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
     
@@ -42,8 +43,14 @@ export default function ResetPassword() {
       return;
     }
 
-    // Success state
+    // Save the new password (the server checks the full password rules)
     setError(null);
+    const result = await postJson('/api/v1/auth/reset-password', { password });
+    if (!result.ok) {
+      setError(result.error.message);
+      setIsSuccess(false);
+      return;
+    }
     setIsSuccess(true);
   };
 

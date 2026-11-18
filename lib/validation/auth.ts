@@ -49,6 +49,25 @@ export const signInSchema = z.object({
 
 export const emailOnlySchema = z.object({ email: emailSchema });
 
+/** New password after following a reset link (US1.3). */
+export const resetPasswordSchema = z.object({ password: passwordSchema });
+
+/** Change password while signed in (US1.3). */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password").max(200),
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  })
+  .refine((v) => v.newPassword !== v.currentPassword, {
+    path: ["newPassword"],
+    message: "Choose a password different from your current one",
+  });
+
 /** Only allow redirects to paths inside this app (prevents open redirects). */
 export function safeNextPath(next: string | null | undefined, fallback = "/dashboard"): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
