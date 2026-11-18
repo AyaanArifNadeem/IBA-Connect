@@ -21,18 +21,21 @@ export function connectionRequestEmail(args: {
   from: string;
   note: string;
   appUrl: string;
+  /** Set when the request is a response to a Need Board post (FR4.3) */
+  postTitle?: string | null;
 }): EmailMessage {
   const link = `${args.appUrl}/requests`;
+  const about = args.postTitle ? ` about your post “${escape(args.postTitle)}”` : "";
   return {
     to: { email: args.to.email, name: args.to.name },
     subject: `${args.from} wants to connect on IBA Connect`,
     html: layout(
       `${args.from} wants to connect`,
-      `<p>Hi ${escape(args.to.name.split(" ")[0])},</p><p>${escape(args.from)} sent you a connection request:</p>
+      `<p>Hi ${escape(args.to.name.split(" ")[0])},</p><p>${escape(args.from)} sent you a connection request${about}:</p>
 <blockquote style="margin:0;padding:8px 12px;border-left:3px solid #8b0000;background:#f9fafb">${escape(args.note)}</blockquote>
 <p>Accept to start a private chat, or decline. Your email stays hidden unless you accept.</p>`,
       { label: "Open requests", href: link },
     ),
-    text: `${args.from} wants to connect on IBA Connect.\n\n"${args.note}"\n\nAccept or decline: ${link}`,
+    text: `${args.from} wants to connect on IBA Connect${args.postTitle ? ` about your post "${args.postTitle}"` : ""}.\n\n"${args.note}"\n\nAccept or decline: ${link}`,
   };
 }
