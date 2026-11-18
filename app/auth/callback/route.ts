@@ -3,6 +3,7 @@ import { ibaEmailDomain } from "@/lib/env";
 import { UserStatus, VerificationMethod } from "@/lib/generated/prisma/enums";
 import { isAllowedMicrosoftUser, microsoftDisplayName } from "@/lib/auth/microsoft";
 import { db } from "@/lib/db";
+import { reactivateIfDeactivated } from "@/lib/services/account";
 import { ensureMember, landingPathFor } from "@/lib/services/members";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/validation/auth";
@@ -34,16 +35,19 @@ export async function GET(request: NextRequest) {
     return toSignIn("not-iba");
   }
 
-  const member = await ensureMember({
+  const found = await ensureMember({
     id: user.id,
     email: user.email!,
     name: microsoftDisplayName(user.user_metadata, user.email!),
     method: VerificationMethod.MICROSOFT,
   });
 
-  if (member.status === UserStatus.SUSPENDED) {
+  if (found.deletedAt) return NextResponse.redirect(new URL("/sign-out?reason=signed-out", url.origin));
+  if (found.status === UserStatus.SUSPENDED) {
     return NextResponse.redirect(new URL("/sign-out?reason=suspended", url.origin));
   }
+  // Signing in again reactivates a deactivated account (FR1.8)
+  const member = await reactivateIfDeactivated(found);
 
   const destination = member.profileCompletedAt ? next : landingPathFor(member);
   return NextResponse.redirect(new URL(destination, url.origin));
