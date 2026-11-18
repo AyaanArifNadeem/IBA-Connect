@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentMember } from "@/lib/auth/session";
 import { VerificationMethod } from "@/lib/generated/prisma/enums";
+import { listBlocked } from "@/lib/services/blocks";
+import { BlockedList } from "./blocked-list";
 import { ChangePasswordForm } from "./change-password-form";
 
 export const metadata: Metadata = { title: "Settings · IBA Connect" };
@@ -29,6 +31,16 @@ export default async function SettingsPage() {
             <ChangePasswordForm />
           </CardContent>
         )}
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Blocked members</CardTitle>
+          <CardDescription>Blocked members cannot send you requests or messages.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BlockedList blocked={member ? await listBlocked(member.id) : []} />
+        </CardContent>
       </Card>
     </div>
   );
