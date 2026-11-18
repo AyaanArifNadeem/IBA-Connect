@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { postJson } from '@/lib/client/api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
     
@@ -40,6 +41,11 @@ export default function ForgotPassword() {
     }
     
     if (email && !error) {
+      const result = await postJson('/api/v1/auth/forgot-password', { email });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
       setIsSent(true);
     }
   };
@@ -47,7 +53,7 @@ export default function ForgotPassword() {
   return (
     <div 
       className="min-h-screen w-full flex flex-col text-gray-900 font-sans overflow-hidden relative bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('bg.png')" }}
+      style={{ backgroundImage: "url('/bg.png')" }}
     >
       
       {/* Full-screen backdrop blur overlay */}
