@@ -20,7 +20,7 @@ const courses = [
   { id: "11111111-1111-4111-8111-111111111111", code: "CSE341", title: "Database Systems", department: "Computer Science" },
   { id: "22222222-2222-4222-8222-222222222222", code: "ECO101", title: "Microeconomics", department: "Economics" },
 ];
-const empty: ProfileFormValues = { name: "Sara Raza", batch: "", programme: "", department: "", semester: "", bio: "", skills: [], courseIds: [] };
+const empty: ProfileFormValues = { name: "Sara Raza", batch: "", programme: "", department: "", semester: "", bio: "", skills: [], courseIds: [], field: "", company: "" };
 
 function renderForm(initial = empty, isAlumnus = false) {
   render(<ProfileForm initial={initial} courses={courses} isAlumnus={isAlumnus} submitLabel="Finish setup" redirectTo="/dashboard" />);
@@ -40,6 +40,20 @@ describe("ProfileForm (US1.5)", () => {
   it("hides the semester for alumni", () => {
     renderForm(empty, true);
     expect(screen.queryByLabelText("Current semester")).not.toBeInTheDocument();
+  });
+
+  it("TC-025: asks alumni for field and company, and students not at all (US1.7)", async () => {
+    const user = userEvent.setup();
+    renderForm(empty, true);
+    await user.click(screen.getByRole("button", { name: "Finish setup" }));
+    expect(screen.getByText("Choose your field")).toBeInTheDocument();
+    expect(screen.getByText("Enter your company or organisation")).toBeInTheDocument();
+  });
+
+  it("does not show field and company to current students", () => {
+    renderForm();
+    expect(screen.queryByLabelText("Field")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Company or organisation")).not.toBeInTheDocument();
   });
 
   it("adds skills with Enter, ignores duplicates and removes them", async () => {
