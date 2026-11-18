@@ -82,6 +82,8 @@ model User {
   @@index([batch])
   @@index([department])
   @@index([programme])
+  /// Fast partial-match search on names (FR2.2, NFR1)
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "User_name_trgm_idx")
 }
 
 enum AlumniRecordKind {
@@ -126,6 +128,8 @@ model Course {
   posts   Post[]
 
   @@index([department])
+  @@index([code(ops: raw("gin_trgm_ops"))], type: Gin, map: "Course_code_trgm_idx")
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Course_title_trgm_idx")
 }
 
 /// Courses a member has taken, with the per-course advise flag (FR1.4, FR1.5)
@@ -149,6 +153,8 @@ model Skill {
   slug String @unique
 
   users UserSkill[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Skill_name_trgm_idx")
 }
 
 model UserSkill {
