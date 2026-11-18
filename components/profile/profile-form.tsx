@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { requestJson } from "@/lib/client/api";
-import { DEPARTMENTS, MAX_SEMESTER, PROGRAMMES, maxBatch } from "@/lib/constants/academics";
+import { ALUMNI_FIELDS, DEPARTMENTS, MAX_SEMESTER, PROGRAMMES, maxBatch } from "@/lib/constants/academics";
 import { BIO_MAX } from "@/lib/validation/profile";
 import { CoursePicker, type CourseOption } from "./course-picker";
 import { SkillsInput } from "./skills-input";
@@ -23,6 +23,9 @@ export type ProfileFormValues = {
   bio: string;
   skills: string[];
   courseIds: string[];
+  /** Alumni only (US1.7) */
+  field: string;
+  company: string;
 };
 
 type Field = keyof ProfileFormValues;
@@ -61,6 +64,8 @@ export function ProfileForm({ initial, courses, isAlumnus, submitLabel, redirect
     if (!values.bio.trim()) missing.bio = "Write a short bio";
     if (values.bio.length > BIO_MAX) missing.bio = `Bio can be at most ${BIO_MAX} characters`;
     if (values.skills.length === 0) missing.skills = "Add at least one skill";
+    if (isAlumnus && !values.field) missing.field = "Choose your field";
+    if (isAlumnus && !values.company.trim()) missing.company = "Enter your company or organisation";
     setErrors(missing);
     return Object.keys(missing).length === 0;
   }
@@ -75,6 +80,8 @@ export function ProfileForm({ initial, courses, isAlumnus, submitLabel, redirect
       ...values,
       batch: Number(values.batch),
       semester: isAlumnus || !values.semester ? null : Number(values.semester),
+      field: isAlumnus ? values.field : null,
+      company: isAlumnus ? values.company.trim() : null,
     });
     setSaving(false);
 
@@ -161,6 +168,26 @@ export function ProfileForm({ initial, courses, isAlumnus, submitLabel, redirect
           {error("department")}
         </div>
       </div>
+
+      {isAlumnus ? (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="field">Field</Label>
+            <NativeSelect id="field" value={values.field} onChange={(e) => update("field", e.target.value)} {...a11y("field")}>
+              <option value="">Choose…</option>
+              {ALUMNI_FIELDS.map((f) => (
+                <option key={f}>{f}</option>
+              ))}
+            </NativeSelect>
+            {error("field")}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="company">Company or organisation</Label>
+            <Input id="company" autoComplete="organization" value={values.company} onChange={(e) => update("company", e.target.value)} {...a11y("company")} />
+            {error("company")}
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <div className="flex items-baseline justify-between">

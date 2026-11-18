@@ -45,9 +45,14 @@ export type OwnProfile = Awaited<ReturnType<typeof getOwnProfile>>;
  */
 export async function saveProfile(member: { id: string; role: Role; profileCompletedAt: Date | null }, input: ProfileInput) {
   const isAlumnus = member.role === Role.ALUMNUS;
+  const missing: { path: string; message: string }[] = [];
   if (!isAlumnus && (input.semester === null || input.semester === undefined)) {
-    throw validationFailed([{ path: "semester", message: "Choose your current semester" }]);
+    missing.push({ path: "semester", message: "Choose your current semester" });
   }
+  // Alumni profiles include field and company (US1.7)
+  if (isAlumnus && !input.field) missing.push({ path: "field", message: "Choose your field" });
+  if (isAlumnus && !input.company) missing.push({ path: "company", message: "Enter your company or organisation" });
+  if (missing.length) throw validationFailed(missing);
 
   const courseIds = [...new Set(input.courseIds)];
   if (courseIds.length) {
@@ -81,6 +86,8 @@ export async function saveProfile(member: { id: string; role: Role; profileCompl
         department: input.department,
         semester: isAlumnus ? null : input.semester,
         bio: input.bio,
+        field: isAlumnus ? input.field : null,
+        company: isAlumnus ? input.company : null,
         profileCompletedAt: member.profileCompletedAt ?? new Date(),
         skills: { create: skills.map((s) => ({ skillId: s.id })) },
         courses: { create: courseIds.map((id) => ({ courseId: id, canAdvise: canAdvise.get(id) ?? false })) },

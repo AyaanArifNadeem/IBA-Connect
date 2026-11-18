@@ -36,3 +36,21 @@ export const maxBatch = () => new Date().getFullYear();
 
 export const MIN_SEMESTER = 1;
 export const MAX_SEMESTER = 12;
+
+/** Career fields for alumni profiles and the alumni filter (US1.7, US2.5). */
+export const ALUMNI_FIELDS = [
+  "Accounting & Audit",
+  "Banking & Finance",
+  "Consulting",
+  "Data & Analytics",
+  "Education & Research",
+  "Entrepreneurship",
+  "Government & Policy",
+  "Marketing & Sales",
+  "Media & Communications",
+  "Software & IT",
+  "Supply Chain & Operations",
+  "Other",
+] as const;
+
+export type AlumniField = (typeof ALUMNI_FIELDS)[number];

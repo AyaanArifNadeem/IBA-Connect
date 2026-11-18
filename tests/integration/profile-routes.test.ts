@@ -70,11 +70,29 @@ describe("PUT /api/v1/profile (FR1.4, US1.5)", () => {
     expect((await res.json()).error.details[0].path).toBe("semester");
   });
 
-  it("does not need a semester for an alumnus", async () => {
+  it("TC-025: saves field and company for an alumnus, who needs no semester (US1.7)", async () => {
+    await testDb.user.update({ where: { id: memberId }, data: { role: Role.ALUMNUS } });
+    const res = await put({ ...valid(), semester: null, field: "Banking & Finance", company: "Contoso Bank" });
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toMatchObject({ semester: null, field: "Banking & Finance", company: "Contoso Bank" });
+  });
+
+  it("requires field and company from alumni", async () => {
     await testDb.user.update({ where: { id: memberId }, data: { role: Role.ALUMNUS } });
     const res = await put({ ...valid(), semester: null });
-    expect(res.status).toBe(200);
-    expect((await res.json()).data.semester).toBeNull();
+    const paths = (await res.json()).error.details.map((d: { path: string }) => d.path);
+    expect(paths).toEqual(["field", "company"]);
+  });
+
+  it("ignores field and company sent for a current student", async () => {
+    const res = await put({ ...valid(), field: "Consulting", company: "Fabrikam" });
+    expect((await res.json()).data).toMatchObject({ field: null, company: null });
+  });
+
+  it("rejects a field that is not on the list", async () => {
+    await testDb.user.update({ where: { id: memberId }, data: { role: Role.ALUMNUS } });
+    const res = await put({ ...valid(), semester: null, field: "Astrology", company: "X" });
+    expect((await res.json()).error.details[0].path).toBe("field");
   });
 
   it("reuses skills from the shared list and drops case-only duplicates", async () => {
