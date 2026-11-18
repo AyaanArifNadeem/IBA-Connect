@@ -33,3 +33,8 @@ test("the alumni verification page offers a code or the alumni list", async ({ p
   await page.getByText("My email is on the alumni list").click();
   await expect(page.getByLabel("Alumni code")).toBeHidden();
 });
+
+test("TC-040: the admin panel needs a signed-in member", async ({ page }) => {
+  await page.goto("/admin/alumni");
+  await expect(page).toHaveURL(/\/sign-in\?next=%2Fadmin%2Falumni/);
+});
