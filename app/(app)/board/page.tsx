@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BoardFilters } from "@/components/board/board-filters";
 import { PostCard } from "@/components/board/post-card";
+import { RespondButton } from "@/components/board/respond-button";
 import { Pager } from "@/components/directory/pager";
 import { buttonVariants } from "@/components/ui/button";
 import { paramsToObject } from "@/lib/api/validation";
@@ -56,7 +57,15 @@ export default async function BoardPage({ searchParams }: PageProps<"/board">) {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {result.posts.map((p) => (
             <li key={p.id}>
-              <PostCard post={p} avatarUrl={p.author.avatarPath ? avatars.get(p.author.avatarPath) : null} />
+              <PostCard
+                post={p}
+                avatarUrl={p.author.avatarPath ? avatars.get(p.author.avatarPath) : null}
+                action={
+                  p.mine ? null : (
+                    <RespondButton post={{ id: p.id, type: p.type, title: p.title, authorName: p.author.name }} responded={p.respondedByMe} />
+                  )
+                }
+              />
             </li>
           ))}
         </ul>
