@@ -98,6 +98,14 @@ describe("POST /api/v1/auth/alumni-register (FR1.3, US1.4)", () => {
     expect((await res.json()).error.details[0].message).toMatch(/register with it instead/);
   });
 
+  it("answers 400, not 500, when Supabase refuses the email address", async () => {
+    await code();
+    auth.signUp.mockResolvedValue({ data: { user: null }, error: Object.assign(new Error("invalid"), { code: "email_address_invalid", status: 400 }) });
+    const res = await register({ ...base, method: "code", code: "IBA-7KQ2-M9XD" });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.details[0].path).toBe("email");
+  });
+
   it("refuses an email that already has an account", async () => {
     await code();
     await makeUser({ email: base.email });

@@ -131,10 +131,14 @@ async function activity(ids: Record<string, string>) {
     [ids.student, "How should I prepare for the first quiz?", true],
     [ids.adviser, "Practise ER diagrams and normalisation. I'll send you my notes.", false],
   ];
+  // Running the script again resets the chat: extra messages go and the read state is restored
+  const messageIds = lines.map((_, i) => stableUuid(`chat:student-adviser:${i}`));
+  await db.message.deleteMany({ where: { connectionId: chat, id: { notIn: messageIds } } });
   for (let i = 0; i < lines.length; i++) {
     const [sender, body, read] = lines[i];
-    const mid = stableUuid(`chat:student-adviser:${i}`);
-    await db.message.upsert({ where: { id: mid }, update: {}, create: { id: mid, connectionId: chat, senderId: sender, body, sentAt: new Date(Date.now() - (3 - i * 0.5) * DAY), readAt: read ? new Date() : null } });
+    const mid = messageIds[i];
+    const readAt = read ? new Date() : null;
+    await db.message.upsert({ where: { id: mid }, update: { readAt }, create: { id: mid, connectionId: chat, senderId: sender, body, sentAt: new Date(Date.now() - (3 - i * 0.5) * DAY), readAt } });
   }
 
   // Pending requests waiting for the student and the alumnus; one sent by the student

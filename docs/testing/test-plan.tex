@@ -31,6 +31,7 @@ Static & Lint and type-check on every change (NFR15) & ESLint, TypeScript\\
 \begin{itemize}
 \item \textbf{Local:} developer machine with a throwaway PostgreSQL database for integration tests.
 \item \textbf{CI (GitHub Actions):} every pull request runs lint, type-check, unit tests, integration tests against a fresh PostgreSQL container (migrations applied, schema drift checked, demo data seeded), the production build and the end-to-end tests.
+\item \textbf{Real backend (local build + the team's Supabase project):} \texttt{npm run test:e2e:real} runs the test cases that can be automated end to end against the real database, auth and storage, with the demo accounts and throwaway accounts it creates and deletes. It needs the project's secrets, so it is run by a developer, not in CI. \texttt{scripts/record-test-results.mjs} copies its outcomes into the test case table.
 \item \textbf{Preview / production (Vercel + Supabase):} manual test runs and the sprint demo.
 \item \textbf{Test data:} the seed script creates the course list, skills and fictional members (reserved \texttt{.test} email domain, no real personal data). \texttt{SEED\_MEMBER\_COUNT=1000} creates the dataset for the search performance test (NFR2). Test accounts for manual runs are created by the testers and never use real students' details.
 \end{itemize}
