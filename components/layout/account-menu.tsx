@@ -42,7 +42,8 @@ export function AccountMenu({ user }: { user: ShellUser }) {
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/sign-out" prefetch={false} />}>
+        {/* Full page navigation: the sign-out route ends the session and redirects */}
+        <DropdownMenuItem render={<a href="/sign-out" />}>
           <LogOut aria-hidden /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,17 @@ export default function SignIn() {
   
   const [showPassword, setShowPassword] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Explain why the member was signed out (FR1.6)
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    const messages: Record<string, string> = {
+      suspended: 'Your account is suspended. Contact the IBA Connect team.',
+      idle: 'You were signed out after a period of inactivity. Please sign in again.',
+    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL once on load
+    if (reason && messages[reason]) setError(messages[reason]);
+  }, []);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
