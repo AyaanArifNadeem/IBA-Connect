@@ -3,6 +3,7 @@ import { ok, route } from "@/lib/api/handler";
 import { clientIp, parseJson } from "@/lib/api/validation";
 import { UserStatus, VerificationMethod } from "@/lib/generated/prisma/enums";
 import { AUTH_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
+import { reactivateIfDeactivated } from "@/lib/services/account";
 import { ensureMember, landingPathFor } from "@/lib/services/members";
 import { createClient } from "@/lib/supabase/server";
 import { signInSchema } from "@/lib/validation/auth";
@@ -26,17 +27,23 @@ export const POST = route(async (request) => {
     throw new ApiError(401, "unauthorized", "Incorrect email or password.");
   }
 
-  const member = await ensureMember({
+  const found = await ensureMember({
     id: data.user.id,
     email: data.user.email ?? input.email,
     name: String(data.user.user_metadata?.name ?? ""),
     method: VerificationMethod.EMAIL,
   });
 
-  if (member.status === UserStatus.SUSPENDED) {
+  if (found.deletedAt) {
+    await supabase.auth.signOut();
+    throw new ApiError(401, "unauthorized", "This account has been deleted.");
+  }
+  if (found.status === UserStatus.SUSPENDED) {
     await supabase.auth.signOut();
     throw suspended();
   }
+  // Signing in again reactivates a deactivated account (FR1.8)
+  const member = await reactivateIfDeactivated(found);
 
   return ok({ next: landingPathFor(member) });
 });

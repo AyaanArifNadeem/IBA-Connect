@@ -3,12 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getCurrentMember } from "@/lib/auth/session";
 import { VerificationMethod } from "@/lib/generated/prisma/enums";
 import { listBlocked } from "@/lib/services/blocks";
+import { AccountActions } from "./account-actions";
 import { BlockedList } from "./blocked-list";
 import { ChangePasswordForm } from "./change-password-form";
 
 export const metadata: Metadata = { title: "Settings · IBA Connect" };
 
-/** Account settings (wireframe P05). Deactivate and delete arrive with FR1.8. */
+/** Account settings (wireframe P05): password, blocked members, deactivate or delete. */
 export default async function SettingsPage() {
   const member = await getCurrentMember();
   const usesMicrosoft = member?.verificationMethod === VerificationMethod.MICROSOFT;
@@ -40,6 +41,15 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <BlockedList blocked={member ? await listBlocked(member.id) : []} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AccountActions />
         </CardContent>
       </Card>
     </div>
