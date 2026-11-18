@@ -8,13 +8,20 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh: vi.fn() }),
 }));
 
+const signInWithOAuth = vi.fn();
+vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ auth: { signInWithOAuth } }) }));
+
 const fetchMock = vi.fn();
 beforeEach(() => {
   push.mockReset();
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+  signInWithOAuth.mockReset();
+});
 
 const jsonResponse = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -72,5 +79,28 @@ describe("Sign-in page", () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { data: { next: "/profile/setup" } }));
     await fillAndSubmit();
     await waitFor(() => expect(push).toHaveBeenCalledWith("/profile/setup"));
+  });
+});
+
+describe("Microsoft sign-in button (US1.1)", () => {
+  it("starts Azure sign-in with a callback back to the app", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.test");
+    signInWithOAuth.mockResolvedValue({ error: null });
+    const user = userEvent.setup();
+    render(<SignIn />);
+    await user.click(screen.getByRole("button", { name: "Sign in with Microsoft (IBA)" }));
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "azure",
+      options: { redirectTo: "http://localhost:3000/auth/callback?next=%2Fdashboard", scopes: "openid email profile" },
+    });
+  });
+
+  it("explains when Microsoft sign-in is not configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    const user = userEvent.setup();
+    render(<SignIn />);
+    await user.click(screen.getByRole("button", { name: "Sign in with Microsoft (IBA)" }));
+    expect(screen.getByText(/not set up yet/)).toBeInTheDocument();
+    expect(signInWithOAuth).not.toHaveBeenCalled();
   });
 });
