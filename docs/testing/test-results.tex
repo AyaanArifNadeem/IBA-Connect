@@ -1,6 +1,6 @@
 \documentclass[10pt,a4paper]{article}
 \usepackage{ibaconnect}
-\docinfo{Test Results (Sprint 1)}{1.0}{17 Nov 2026}
+\docinfo{Test Results (Sprint 1)}{1.1}{19 Nov 2026}
 
 \IfFileExists{generated/test-cases.tex}{\input{generated/test-cases.tex}}{%
   \PackageError{testresults}{Run npm run docs:build (it exports test-cases.json first)}{}}
@@ -25,9 +25,17 @@ Not yet run & \tcnotrun\\
 \toprule
 \textbf{Date} & \textbf{Tester} & \textbf{Build / commit} & \textbf{Environment and scope}\\
 \midrule
- & & & \\[12pt]
+19 Nov 2026 & Ahmed Abdul Rahim & \texttt{a72a7fc} & \textbf{Real backend.} Production build run locally against the team's Supabase project (database, auth and storage). \texttt{npm run test:e2e:real}: 60 automated tests covering 82 test cases, all passed (TC-004 skipped because it sends a real email). Demo accounts plus throwaway accounts, deleted after the run.\\
+19 Nov 2026 & Ahmed Abdul Rahim & \texttt{a72a7fc} & \textbf{Integration.} 202 integration tests on PostgreSQL with the project migrations, all passed. TC-050 is taken from the search performance test (1,000 members).\\
 \bottomrule
 \end{tabularx}
+
+\textbf{Not yet run} (they need an outside service or a person):
+\begin{itemize}
+\item TC-001, TC-002: Microsoft sign-in needs the Azure app registration.
+\item TC-004, TC-007, TC-011, TC-012, TC-015, TC-016, TC-068: need real emails to arrive, so they wait for Brevo (email API and Supabase custom SMTP). The server-side rules behind them pass in the integration tests.
+\item TC-086: keyboard-only use is checked by hand.
+\end{itemize}
 
 \section*{Results by test case}
 {\small
@@ -43,13 +51,16 @@ Not yet run & \tcnotrun\\
 }
 
 \section*{Defects found}
-Defects are logged as GitHub issues (bug template) and fixed on \texttt{fix/*} branches.
+Defects found while executing the test cases against the real backend on 19 Nov 2026. Each was fixed with a regression test in the same pull request as the real-backend test suite.
 
 \begin{tabularx}{\linewidth}{@{}l l X l@{}}
 \toprule
-\textbf{Issue} & \textbf{Test case} & \textbf{Summary} & \textbf{Status}\\
+\textbf{\#} & \textbf{Test case} & \textbf{Summary} & \textbf{Status}\\
 \midrule
- & & & \\[12pt]
+D1 & TC-028, TC-033 & Opening the account menu crashed the page (``This page couldn't load''): the menu's name label was outside a menu group. Profile, Settings and Sign out could not be reached from the menu. & Fixed\\
+D2 & TC-085 & The directory was 388 px wide on a 360 px screen, so the page scrolled sideways. & Fixed\\
+D3 & TC-049 & A search with no matches did not say ``No members found'' and had no link to clear the search. & Fixed\\
+D4 & TC-015 & Alumni sign-up returned a server error (500) when Supabase refused the email address; it now returns a validation error on the email field. & Fixed\\
 \bottomrule
 \end{tabularx}
 
