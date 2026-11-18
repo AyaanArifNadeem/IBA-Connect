@@ -129,3 +129,81 @@ export async function sendRequest(
 
   return { connection, remaining: allowance.remaining - 1 };
 }
+
+// ------------------------------------------------------------ accept, decline and inbox
+
+/** FR3.2: only the recipient answers, and only while the request is pending. */
+export async function respondToRequest(memberId: string, connectionId: string, action: "accept" | "decline") {
+  const connection = await db.connection.findUnique({ where: { id: connectionId } });
+  // Requests between other members are reported as not found, so they cannot be discovered
+  if (!connection || (connection.recipientId !== memberId && connection.requesterId !== memberId)) {
+    throw notFound("Request not found.");
+  }
+  if (connection.recipientId !== memberId) throw new ApiError(403, "forbidden", "Only the person who received the request can answer it.");
+  if (connection.status !== ConnectionStatus.PENDING) throw conflict("This request has already been answered.");
+
+  const updated = await db.connection.updateMany({
+    where: { id: connectionId, status: ConnectionStatus.PENDING },
+    data: { status: action === "accept" ? ConnectionStatus.ACCEPTED : ConnectionStatus.DECLINED, respondedAt: new Date() },
+  });
+  if (updated.count !== 1) throw conflict("This request has already been answered.");
+  return db.connection.findUniqueOrThrow({ where: { id: connectionId } });
+}
+
+export const INBOX_VIEWS = ["incoming", "outgoing", "accepted"] as const;
+export type InboxView = (typeof INBOX_VIEWS)[number];
+
+const personSelect = { id: true, name: true, email: true, avatarPath: true, deletedAt: true } as const;
+
+/** Requests inbox (FR3.3, US3.4): incoming pending, outgoing (pending and declined), accepted. */
+export async function listRequests(memberId: string, view: InboxView, now = new Date()) {
+  const where =
+    view === "incoming"
+      ? { recipientId: memberId, status: ConnectionStatus.PENDING }
+      : view === "outgoing"
+        ? { requesterId: memberId, status: { in: [ConnectionStatus.PENDING, ConnectionStatus.DECLINED] } }
+        : { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] };
+
+  const rows = await db.connection.findMany({
+    where,
+    include: {
+      requester: { select: personSelect },
+      recipient: { select: personSelect },
+      originPost: { select: { id: true, title: true } },
+    },
+    orderBy: view === "accepted" ? { respondedAt: "desc" } : { createdAt: "desc" },
+    take: 100,
+  });
+
+  return rows.map((c) => {
+    const other = c.requesterId === memberId ? c.recipient : c.requester;
+    const cooldownDays =
+      c.status === ConnectionStatus.DECLINED && c.respondedAt
+        ? Math.max(0, Math.ceil((c.respondedAt.getTime() + COOLDOWN_DAYS * DAY_MS - now.getTime()) / DAY_MS))
+        : 0;
+    return {
+      id: c.id,
+      status: c.status,
+      note: c.contextNote,
+      createdAt: c.createdAt.toISOString(),
+      respondedAt: c.respondedAt?.toISOString() ?? null,
+      person: { id: other.id, name: other.deletedAt ? "Deleted member" : other.name, avatarPath: other.avatarPath },
+      // Email only for accepted connections (FR3.5)
+      email: c.status === ConnectionStatus.ACCEPTED && !other.deletedAt ? other.email : null,
+      viaPost: c.originPost,
+      cooldownDays,
+    };
+  });
+}
+
+export type InboxItem = Awaited<ReturnType<typeof listRequests>>[number];
+
+/** Counts for the inbox tabs and the menu badge (FR3.6). */
+export async function inboxCounts(memberId: string) {
+  const [incoming, outgoing, accepted] = await Promise.all([
+    db.connection.count({ where: { recipientId: memberId, status: ConnectionStatus.PENDING } }),
+    db.connection.count({ where: { requesterId: memberId, status: { in: [ConnectionStatus.PENDING, ConnectionStatus.DECLINED] } } }),
+    db.connection.count({ where: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] } }),
+  ]);
+  return { incoming, outgoing, accepted };
+}
