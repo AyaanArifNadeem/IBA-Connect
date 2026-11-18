@@ -1,0 +1,932 @@
+openapi: 3.1.0
+info:
+  title: IBA Connect API
+  version: 0.1.0
+  description: |
+    REST API of IBA Connect (SRS 2.6, 5.2). All routes are under `/api/v1`, take and return JSON
+    (except the two file uploads), and are authorised on the server (NFR7).
+
+    **Authentication.** Routes marked with the `session` security scheme need a signed-in, verified
+    member: the Supabase Auth session cookie set by sign-in. Most member routes also need a finished
+    profile; they answer `403 profile_incomplete` otherwise. Admin routes need the admin role (FR8.5).
+
+    **Responses.** Success: `{ "data": ... }`. Errors always have the same shape (SRS 5.4):
+    `{ "error": { "code": "...", "message": "...", "details"?: [...] } }`. Validation errors list the
+    failing fields in `details`. Rate-limited answers (`429`) include a `Retry-After` header.
+
+    **Privacy.** A member's email is only returned for accepted connections (FR3.5, NFR10).
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Account
+  - name: Profile
+  - name: Directory
+  - name: Connections
+  - name: Messages
+  - name: Blocks
+  - name: Need Board
+  - name: Admin
+  - name: System
+
+security:
+  - session: []
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Liveness check
+      security: []
+      responses:
+        "200":
+          description: The service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, const: ok }
+                      version: { type: string }
+                      time: { type: string, format: date-time }
+
+  # ------------------------------------------------------------------ Auth
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register with an IBA email and password (FR1.2)
+      description: Sends a verification email. New and already-registered emails get the same answer. Rate-limited per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 80 }
+                email: { type: string, format: email, description: Must be on the IBA domain }
+                password: { $ref: "#/components/schemas/Password" }
+      responses:
+        "201": { $ref: "#/components/responses/Message" }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /auth/sign-in:
+    post:
+      tags: [Auth]
+      summary: Sign in with email and password (FR1.2)
+      description: Sets the session cookie. Refuses unverified, suspended and deleted accounts; reactivates a deactivated account (FR1.8). Rate-limited per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Signed in; where to go next (profile setup or dashboard)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: object, properties: { next: { type: string, examples: ["/dashboard"] } } }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Send the verification email again (US1.2)
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/Email" }
+      responses:
+        "200": { $ref: "#/components/responses/Message" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Email a password reset link (US1.3)
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/Email" }
+      responses:
+        "200": { $ref: "#/components/responses/Message" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Set a new password from a reset link (US1.3)
+      description: Needs the session opened by the reset link. Signs out every session afterwards.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { $ref: "#/components/schemas/Password" }
+      responses:
+        "200": { $ref: "#/components/responses/Message" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password while signed in (US1.3)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword, confirmPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { $ref: "#/components/schemas/Password" }
+                confirmPassword: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Message" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /auth/alumni-register:
+    post:
+      tags: [Auth]
+      summary: Alumni sign-up with a personal email and a code or the alumni list (FR1.3, US1.4)
+      description: The code or list entry is checked before any account is created, and claimed once.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [method, name, email, password]
+              properties:
+                method: { type: string, enum: [code, list] }
+                name: { type: string, minLength: 2, maxLength: 80 }
+                email: { type: string, format: email, description: A personal (non-IBA) email }
+                password: { $ref: "#/components/schemas/Password" }
+                code: { type: string, description: "Required when method is code, e.g. IBA-7KQ2-M9XD" }
+      responses:
+        "201": { $ref: "#/components/responses/Message" }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  # --------------------------------------------------------------- Account
+  /account/deactivate:
+    post:
+      tags: [Account]
+      summary: Deactivate your account (FR1.8)
+      description: The profile leaves the directory; signing in again reactivates it.
+      responses:
+        "200": { description: Deactivated }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /account:
+    delete:
+      tags: [Account]
+      summary: Delete your account (FR1.8, SRS 6.5)
+      description: Anonymises the profile, keeps messages as "Deleted member", removes the sign-in account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, const: DELETE }
+      responses:
+        "200": { description: Deleted }
+        "400": { $ref: "#/components/responses/Error" }
+
+  # --------------------------------------------------------------- Profile
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Your own profile
+      responses:
+        "200":
+          description: The profile
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: "#/components/schemas/OwnProfile" } } } } }
+    put:
+      tags: [Profile]
+      summary: Create or update your profile (FR1.4, US1.5, US1.6, US1.7)
+      description: The first save completes profile setup. Semester is required for students; field and company for alumni.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, batch, programme, department, bio, skills]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 80 }
+                batch: { type: integer, minimum: 1960 }
+                programme: { type: string, description: One of the programme list }
+                department: { type: string, description: One of the department list }
+                semester: { type: [integer, "null"], minimum: 1, maximum: 12 }
+                bio: { type: string, minLength: 1, maxLength: 500 }
+                skills: { type: array, items: { type: string, maxLength: 40 }, minItems: 1, maxItems: 15 }
+                courseIds: { type: array, items: { type: string, format: uuid }, maxItems: 40 }
+                field: { type: [string, "null"], description: Alumni only }
+                company: { type: [string, "null"], maxLength: 80, description: Alumni only }
+      responses:
+        "200":
+          description: Saved
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: "#/components/schemas/OwnProfile" } } } } }
+        "400": { $ref: "#/components/responses/Error" }
+
+  /profile/advising:
+    put:
+      tags: [Profile]
+      summary: Available to advise, with the courses (FR1.5, US1.8)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [available]
+              properties:
+                available: { type: boolean }
+                courseIds: { type: array, items: { type: string, format: uuid }, description: At least one when available; must be in your profile }
+      responses:
+        "200": { description: Saved }
+        "400": { $ref: "#/components/responses/Error" }
+
+  /profile/avatar:
+    post:
+      tags: [Profile]
+      summary: Upload a profile photo (US1.6)
+      description: PNG, JPEG or WebP, checked by content, at most 2 MB. Stored privately; returned as a signed link.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200": { $ref: "#/components/responses/AvatarUrl" }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Profile]
+      summary: Remove the profile photo
+      responses:
+        "200": { $ref: "#/components/responses/AvatarUrl" }
+
+  /courses:
+    get:
+      tags: [Profile]
+      summary: Active courses from the course list (FR1.10)
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 60 }, description: Filter by code or title }
+      responses:
+        "200":
+          description: Courses
+          content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { $ref: "#/components/schemas/Course" } } } } } }
+
+  /skills:
+    get:
+      tags: [Profile]
+      summary: Skill suggestions from the shared list
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 40 } }
+      responses:
+        "200":
+          description: Skill names
+          content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { type: string } } } } } }
+
+  # ------------------------------------------------------------- Directory
+  /members:
+    get:
+      tags: [Directory]
+      summary: Member directory with search and filters (FR2.1, FR2.2, FR2.3)
+      description: Every filter must match. No contact details are ever returned here.
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: q, in: query, schema: { type: string, maxLength: 100 }, description: Words that must each match a name, skill, or course code or title }
+        - { name: course, in: query, schema: { type: array, items: { type: string } }, style: form, explode: true, description: Course code(s) taken }
+        - { name: skill, in: query, schema: { type: array, items: { type: string } }, style: form, explode: true }
+        - { name: advise, in: query, schema: { type: string, enum: ["1"] }, description: Available to advise (on the chosen course, if any) }
+        - { name: batch, in: query, schema: { type: integer } }
+        - { name: department, in: query, schema: { type: string } }
+        - { name: programme, in: query, schema: { type: string } }
+        - { name: alumni, in: query, schema: { type: string, enum: ["1"] } }
+        - { name: field, in: query, schema: { type: string }, description: Alumni field (implies alumni) }
+        - { name: company, in: query, schema: { type: string }, description: Alumni company, partial match (implies alumni) }
+      responses:
+        "200":
+          description: One page of member cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      pageSize: { type: integer }
+                      total: { type: integer }
+                      pages: { type: integer }
+                      members: { type: array, items: { $ref: "#/components/schemas/MemberCard" } }
+        "400": { $ref: "#/components/responses/Error" }
+
+  /members/{id}:
+    get:
+      tags: [Directory]
+      summary: A member's profile (US2.6)
+      description: "`email` is null unless you have an accepted connection with this member (FR3.5)."
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: The profile
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: "#/components/schemas/MemberProfile" } } } } }
+        "404": { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------- Connections
+  /connections:
+    get:
+      tags: [Connections]
+      summary: Requests inbox (FR3.3, US3.4)
+      parameters:
+        - { name: view, in: query, schema: { type: string, enum: [incoming, outgoing, accepted], default: incoming } }
+      responses:
+        "200":
+          description: The list and the counts for each tab
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      view: { type: string }
+                      counts: { type: object, properties: { incoming: { type: integer }, outgoing: { type: integer }, accepted: { type: integer } } }
+                      items: { type: array, items: { $ref: "#/components/schemas/InboxItem" } }
+    post:
+      tags: [Connections]
+      summary: Send a connection request (FR3.1, US3.1, US3.2)
+      description: Up to 10 requests in 24 hours; 3-day cooldown after a decline; refused when blocked. Emails the recipient.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientId, note]
+              properties:
+                recipientId: { type: string, format: uuid }
+                note: { type: string, minLength: 1, maxLength: 300 }
+      responses:
+        "201":
+          description: Pending request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: object, properties: { id: { type: string, format: uuid }, status: { type: string, const: PENDING }, remainingToday: { type: integer } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /connections/allowance:
+    get:
+      tags: [Connections]
+      summary: Requests left in the last 24 hours
+      responses:
+        "200":
+          description: Allowance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: object, properties: { used: { type: integer }, limit: { type: integer }, remaining: { type: integer } } }
+
+  /connections/{id}:
+    patch:
+      tags: [Connections]
+      summary: Accept or decline a request (FR3.2, US3.3)
+      description: Only the recipient, only while pending.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [accept, decline] }
+      responses:
+        "200": { description: Answered }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  # -------------------------------------------------------------- Messages
+  /connections/{id}/messages:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [Messages]
+      summary: Messages in a chat, oldest first (FR3.4, FR3.8)
+      description: Accepted connections only. Reading marks the other member's messages as read (US3.6). Use `after` to poll for new messages.
+      parameters:
+        - { name: after, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Messages
+          content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { $ref: "#/components/schemas/Message" } } } } } }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+    post:
+      tags: [Messages]
+      summary: Send a text message (FR3.4, FR3.8)
+      description: 1 to 2,000 characters, text only; 30 a minute; refused when blocked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        "201":
+          description: Sent
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: "#/components/schemas/Message" } } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  # ---------------------------------------------------------------- Blocks
+  /blocks:
+    get:
+      tags: [Blocks]
+      summary: Members you blocked (FR3.7)
+      responses:
+        "200":
+          description: Blocked members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { type: object, properties: { id: { type: string, format: uuid }, name: { type: string }, since: { type: string, format: date-time } } } }
+    post:
+      tags: [Blocks]
+      summary: Block a member (FR3.7)
+      description: Stops requests and messages both ways and closes pending requests between you.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [memberId], properties: { memberId: { type: string, format: uuid } } }
+      responses:
+        "201": { description: Blocked }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /blocks/{memberId}:
+    delete:
+      tags: [Blocks]
+      summary: Unblock a member
+      parameters:
+        - { name: memberId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Unblocked }
+
+  # ------------------------------------------------------------ Need Board
+  /posts:
+    get:
+      tags: [Need Board]
+      summary: Open posts on the Need Board (FR4.2, US4.2)
+      description: Closed and expired posts never appear.
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: type, in: query, schema: { type: string, enum: [study-partner, project-teammate, course-advice, career-advice] } }
+        - { name: course, in: query, schema: { type: string } }
+        - { name: department, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+      responses:
+        "200":
+          description: One page of posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      pages: { type: integer }
+                      total: { type: integer }
+                      posts: { type: array, items: { $ref: "#/components/schemas/BoardPost" } }
+        "400": { $ref: "#/components/responses/Error" }
+    post:
+      tags: [Need Board]
+      summary: Publish a need post (FR4.1, US4.1)
+      description: Open to all verified members; expires 14 days later. 10 a day.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  required: [type]
+                  properties:
+                    type: { $ref: "#/components/schemas/PostType" }
+                - $ref: "#/components/schemas/PostFields"
+      responses:
+        "201": { description: Published }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /posts/mine:
+    get:
+      tags: [Need Board]
+      summary: Your posts with their state (FR4.4)
+      responses:
+        "200":
+          description: Your posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        type: { $ref: "#/components/schemas/PostType" }
+                        title: { type: string }
+                        state: { type: string, enum: [open, closed, expired] }
+                        expiresAt: { type: string, format: date-time }
+                        responses: { type: integer }
+
+  /posts/{id}:
+    patch:
+      tags: [Need Board]
+      summary: Edit your open post (FR4.5)
+      description: The type cannot change. Author only; open posts only.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PostFields" }
+      responses:
+        "200": { description: Saved }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /posts/{id}/close:
+    post:
+      tags: [Need Board]
+      summary: Close your post early (FR4.4, US4.4)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200": { description: Closed }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /posts/{id}/responses:
+    post:
+      tags: [Need Board]
+      summary: Respond to a post (FR4.3, US4.3)
+      description: Opens a connection request to the author with the post attached; the request limits apply.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [message], properties: { message: { type: string, minLength: 1, maxLength: 300 } } }
+      responses:
+        "201": { description: Response and connection request created }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------------- Admin
+  /admin/alumni-codes:
+    get:
+      tags: [Admin]
+      summary: Alumni codes with their status (FR1.9)
+      responses:
+        "200": { description: Codes (active, claimed, expired, revoked) }
+        "403": { $ref: "#/components/responses/Error" }
+    post:
+      tags: [Admin]
+      summary: Issue an alumni code (FR1.9)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expiresInDays]
+              properties:
+                expiresInDays: { type: [integer, "null"], minimum: 1, maximum: 365, description: null means it never expires }
+                note: { type: string, maxLength: 80 }
+      responses:
+        "201": { description: The new code }
+        "403": { $ref: "#/components/responses/Error" }
+
+  /admin/alumni-codes/{id}:
+    patch:
+      tags: [Admin]
+      summary: Expire or revoke an unused code (FR1.9)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [action], properties: { action: { type: string, enum: [expire, revoke] } } }
+      responses:
+        "200": { description: Updated }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /admin/alumni-list:
+    get:
+      tags: [Admin]
+      summary: How many alumni are on the list and how many joined
+      responses:
+        "200": { description: Summary }
+    post:
+      tags: [Admin]
+      summary: Import the alumni list from CSV (FR1.9)
+      description: "First row: email,name,batch (email required). Up to 5,000 rows, 1 MB."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, required: [file], properties: { file: { type: string, format: binary } } }
+      responses:
+        "200": { description: Rows added, skipped and invalid }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+
+  /admin/courses:
+    get:
+      tags: [Admin]
+      summary: Every course, retired ones too (FR1.10)
+      responses:
+        "200": { description: Courses with member counts }
+        "403": { $ref: "#/components/responses/Error" }
+    post:
+      tags: [Admin]
+      summary: Add a course (FR1.10)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, title, department]
+              properties:
+                code: { type: string, examples: [CSE341] }
+                title: { type: string, minLength: 3, maxLength: 120 }
+                department: { type: string }
+      responses:
+        "201": { description: Added }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /admin/courses/{id}:
+    patch:
+      tags: [Admin]
+      summary: Edit, retire or restore a course (FR1.10)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+                title: { type: string }
+                department: { type: string }
+                retired: { type: boolean }
+      responses:
+        "200": { description: Updated }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: sb-<project-ref>-auth-token
+      description: Supabase Auth session cookie, set by sign-in.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  requestBodies:
+    Email:
+      required: true
+      content:
+        application/json:
+          schema: { type: object, required: [email], properties: { email: { type: string, format: email } } }
+
+  responses:
+    Error:
+      description: Error (SRS 5.4)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Message:
+      description: Done, with a message for the member
+      content:
+        application/json:
+          schema: { type: object, properties: { data: { type: object, properties: { message: { type: string } } } } }
+    AvatarUrl:
+      description: The photo's signed link (or null)
+      content:
+        application/json:
+          schema: { type: object, properties: { data: { type: object, properties: { avatarUrl: { type: [string, "null"] } } } } }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [bad_request, validation_failed, unauthorized, email_not_verified, forbidden, suspended, profile_incomplete, not_found, conflict, rate_limited, internal_error]
+            message: { type: string }
+            details:
+              type: array
+              items: { type: object, properties: { path: { type: string }, message: { type: string } } }
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 72
+      description: No spaces; upper case, lower case, a digit and a symbol.
+
+    Course:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        title: { type: string }
+        department: { type: string }
+
+    OwnProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string, enum: [STUDENT, ALUMNUS, ADMIN] }
+        name: { type: string }
+        batch: { type: [integer, "null"] }
+        programme: { type: [string, "null"] }
+        department: { type: [string, "null"] }
+        semester: { type: [integer, "null"] }
+        bio: { type: string }
+        availableToAdvise: { type: boolean }
+        field: { type: [string, "null"] }
+        company: { type: [string, "null"] }
+        profileCompleted: { type: boolean }
+        skills: { type: array, items: { type: string } }
+        courses:
+          type: array
+          items: { type: object, properties: { id: { type: string }, code: { type: string }, title: { type: string }, canAdvise: { type: boolean } } }
+
+    MemberCard:
+      type: object
+      description: No contact details (FR2.1, NFR10).
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        isAlumnus: { type: boolean }
+        avatarUrl: { type: [string, "null"] }
+        batch: { type: [integer, "null"] }
+        programme: { type: [string, "null"] }
+        department: { type: [string, "null"] }
+        field: { type: [string, "null"] }
+        company: { type: [string, "null"] }
+        skills: { type: array, items: { type: string } }
+        adviseCourses: { type: array, items: { type: string } }
+
+    MemberProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        isSelf: { type: boolean }
+        isAlumnus: { type: boolean }
+        avatarUrl: { type: [string, "null"] }
+        batch: { type: [integer, "null"] }
+        programme: { type: [string, "null"] }
+        department: { type: [string, "null"] }
+        semester: { type: [integer, "null"] }
+        bio: { type: string }
+        field: { type: [string, "null"] }
+        company: { type: [string, "null"] }
+        availableToAdvise: { type: boolean }
+        skills: { type: array, items: { type: string } }
+        courses:
+          type: array
+          items: { type: object, properties: { code: { type: string }, title: { type: string }, canAdvise: { type: boolean } } }
+        connected: { type: boolean }
+        email: { type: [string, "null"], description: Only for accepted connections (FR3.5) or yourself }
+
+    InboxItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [PENDING, ACCEPTED, DECLINED] }
+        note: { type: string }
+        createdAt: { type: string, format: date-time }
+        respondedAt: { type: [string, "null"], format: date-time }
+        person: { type: object, properties: { id: { type: string, format: uuid }, name: { type: string } } }
+        email: { type: [string, "null"], description: Accepted connections only }
+        viaPost: { type: [object, "null"], properties: { id: { type: string }, title: { type: string } } }
+        cooldownDays: { type: integer }
+
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        body: { type: string }
+        sentAt: { type: string, format: date-time }
+        mine: { type: boolean }
+        readAt: { type: [string, "null"], format: date-time }
+
+    PostType:
+      type: string
+      enum: [STUDY_PARTNER, PROJECT_TEAMMATE, COURSE_ADVICE, CAREER_ADVICE]
+
+    PostFields:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string, minLength: 3, maxLength: 120 }
+        body: { type: string, minLength: 1, maxLength: 2000 }
+        course: { type: [string, "null"], description: Course code; or department, not both }
+        department: { type: [string, "null"] }
+
+    BoardPost:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/PostType" }
+        title: { type: string }
+        body: { type: string }
+        courseCode: { type: [string, "null"] }
+        departmentTag: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        author: { type: object, properties: { id: { type: string }, name: { type: string } } }
+        mine: { type: boolean }
+        responses: { type: integer }
+        respondedByMe: { type: boolean }
