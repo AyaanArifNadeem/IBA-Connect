@@ -65,3 +65,9 @@ The app's own notification emails (for example new connection requests) use the 
 5. Add `http://localhost:3000/auth/callback` and the Vercel `/auth/callback` URLs to **Redirect URLs** (section 3).
 
 Only accounts whose **verified** email is on `IBA_EMAIL_DOMAIN` get in; everyone else is refused and their auth account is removed. If the IBA tenant needs admin consent, Microsoft shows a consent screen: email and password sign-in still works in the meantime.
+
+## 6. Scripts
+
+- `npm run supabase:setup` creates the private `avatars` bucket and sets the Auth site URL, redirect URLs and minimum password length (needs `SUPABASE_ACCESS_TOKEN`). Email templates can only be set by script once custom SMTP (Brevo) is configured; run it again after that.
+- `npm run db:seed` loads courses, skills, 60 fictional members and demo activity (connections, chats, requests, Need Board posts).
+- `npm run db:demo` creates five confirmed demo logins (admin, adviser, student, alumnus, and a new account without a profile) with `DEMO_ACCOUNT_PASSWORD`. The password is never stored in the repository.
