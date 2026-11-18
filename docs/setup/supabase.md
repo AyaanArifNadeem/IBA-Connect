@@ -30,7 +30,7 @@ One-time configuration of the team's Supabase project. Secrets go in `.env.local
 | Confirm signup | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/profile/setup` |
 | Reset password | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` |
 
-**Authentication → Sessions**: inactivity timeout as agreed by the team (the test plan proposes 7 days), FR1.6.
+**Idle sessions (FR1.6)** are handled by the app, because Supabase's inactivity timeout needs a paid plan: set `SESSION_IDLE_DAYS` (default 7, to be confirmed by the team).
 
 ## 3. Email through Brevo (custom SMTP)
 
