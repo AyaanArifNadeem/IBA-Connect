@@ -55,6 +55,13 @@ export async function updateSession(request: NextRequest) {
     signIn.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(signIn);
   }
+  // Signed-in members skip the landing page
+  if (signedIn && pathname === "/") {
+    const dashboard = request.nextUrl.clone();
+    dashboard.pathname = "/dashboard";
+    dashboard.search = "";
+    return NextResponse.redirect(dashboard);
+  }
 
   // Idle sessions expire (FR1.6): sign out when the last request is older than the limit
   if (signedIn && pathname !== "/sign-out") {
