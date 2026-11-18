@@ -3,7 +3,7 @@ import { notFound } from "@/lib/api/errors";
 import { created, ok, route } from "@/lib/api/handler";
 import { parseJson, parseQuery } from "@/lib/api/validation";
 import { requireMember } from "@/lib/auth/session";
-import { listMessages, messageSchema, sendMessage } from "@/lib/services/messages";
+import { listMessages, markRead, messageSchema, sendMessage } from "@/lib/services/messages";
 
 type Ctx = RouteContext<"/api/v1/connections/[id]/messages">;
 
@@ -13,12 +13,15 @@ async function connectionId(ctx: Ctx) {
   return id;
 }
 
-/** GET /api/v1/connections/{id}/messages?after=ISO: messages in order; `after` for polling (FR3.4, FR3.8). */
+/** GET /api/v1/connections/{id}/messages?after=ISO: messages in order, marked as read; `after` for polling (FR3.4, FR3.8, US3.6). */
 export const GET = route<Ctx>(async (request, ctx) => {
   const member = await requireMember();
   const id = await connectionId(ctx);
   const { after } = parseQuery(request, z.object({ after: z.iso.datetime().optional() }));
-  return ok(await listMessages(member.id, id, after ? new Date(after) : undefined));
+  const messages = await listMessages(member.id, id, after ? new Date(after) : undefined);
+  // Reading the chat marks the other member's messages as read (US3.6)
+  await markRead(member.id, id);
+  return ok(messages);
 });
 
 /** POST /api/v1/connections/{id}/messages {body}: send a text message (FR3.4, FR3.8). */
