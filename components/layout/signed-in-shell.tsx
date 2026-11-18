@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Role, UserStatus } from "@/lib/generated/prisma/enums";
 import { getCurrentMember, getIdentity } from "@/lib/auth/session";
 import { inboxCounts } from "@/lib/services/connections";
+import { unreadTotal } from "@/lib/services/messages";
 import { avatarUrl } from "@/lib/storage/avatars";
 import { AppShell } from "./app-shell";
 
@@ -23,7 +24,7 @@ export async function SignedInShell({ children }: { children: ReactNode }) {
   return (
     <AppShell
       user={{ name: member.name, avatarUrl: await avatarUrl(member.avatarPath), isAdmin: member.role === Role.ADMIN }}
-      counts={{ requests: (await inboxCounts(member.id)).incoming, messages: 0 }}
+      counts={{ requests: (await inboxCounts(member.id)).incoming, messages: await unreadTotal(member.id) }}
     >
       {children}
     </AppShell>

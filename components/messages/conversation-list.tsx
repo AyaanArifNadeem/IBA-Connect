@@ -47,13 +47,21 @@ export function ConversationList({
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate font-medium">{c.name}</span>
+                <span className={cn("truncate", c.unread ? "font-bold" : "font-medium")}>{c.name}</span>
                 {c.lastMessage ? <span className="shrink-0 text-xs text-muted-foreground">{time(c.lastMessage.sentAt)}</span> : null}
               </div>
-              <p className="truncate text-sm text-muted-foreground">
+              <p className={cn("truncate text-sm", c.unread ? "font-medium text-foreground" : "text-muted-foreground")}>
                 {c.lastMessage ? `${c.lastMessage.mine ? "You: " : ""}${c.lastMessage.preview}` : "Say hello"}
               </p>
             </div>
+            {c.unread ? (
+              <span
+                className="inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-primary-foreground"
+                aria-label={`${c.unread} unread`}
+              >
+                {c.unread > 99 ? "99+" : c.unread}
+              </span>
+            ) : null}
           </Link>
         </li>
       ))}
