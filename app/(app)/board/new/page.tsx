@@ -13,7 +13,9 @@ export default async function NewPostPage() {
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Post a need</CardTitle>
+        <CardTitle className="text-2xl">
+          <h1>Post a need</h1>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <PostForm courses={courses.map((c) => ({ code: c.code, title: c.title }))} />

@@ -1,4 +1,5 @@
 import "server-only";
+import { connection } from "next/server";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,8 @@ import { assertAccess, type AccessOptions, type AuthIdentity } from "./access";
  * auth server, rather than trusting the cookie alone. Cached for one request.
  */
 export const getIdentity = cache(async (): Promise<AuthIdentity | null> => {
+  // The session is per request: stop prerendering here, before the Supabase client reads the clock
+  await connection();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
