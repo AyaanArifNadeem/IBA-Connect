@@ -177,14 +177,134 @@ async function promoteAdmins() {
   return result.count;
 }
 
+const DAY = 86_400_000;
+const NOTES = [
+  "Hi! I'm taking this course next semester, could you share some tips?",
+  "Looking for a study partner for the mids, are you interested?",
+  "Saw your profile, would love to chat about your field.",
+  "Need a teammate for a project, your skills look like a great fit.",
+];
+const CHAT = [
+  "Hey, thanks for connecting!",
+  "Sure, happy to help. What do you need?",
+  "Mainly the past papers and how to prepare for the quizzes.",
+  "I'll share my notes tomorrow. Focus on normalisation first.",
+  "Perfect, thank you so much!",
+];
+const POSTS: { type: "STUDY_PARTNER" | "PROJECT_TEAMMATE" | "COURSE_ADVICE" | "CAREER_ADVICE"; title: string; body: string; course?: string; department?: string }[] = [
+  { type: "STUDY_PARTNER", title: "CSE341 study partner before mids", body: "Revising normalisation and SQL joins three evenings a week in the library.", course: "CSE341" },
+  { type: "PROJECT_TEAMMATE", title: "Frontend developer for SE project", body: "Building a campus app in React for Software Engineering. Need one more person.", course: "CSE343" },
+  { type: "COURSE_ADVICE", title: "Is Econometrics manageable with a full load?", body: "Thinking of taking ECO301 next semester with four other courses.", course: "ECO301" },
+  { type: "CAREER_ADVICE", title: "Advice on banking internships", body: "Second-year BBA student, looking for tips on summer internships in banking.", department: "Finance" },
+  { type: "STUDY_PARTNER", title: "Linear Algebra problem sets group", body: "Weekly problem-solving sessions on Saturdays.", course: "MTS211" },
+  { type: "COURSE_ADVICE", title: "Which ML electives are worth it?", body: "Choosing between Machine Learning and AI next semester.", course: "CSE442" },
+  { type: "PROJECT_TEAMMATE", title: "Marketing research teammate", body: "Need a partner for the consumer behaviour field study.", course: "MKT301" },
+  { type: "CAREER_ADVICE", title: "Software jobs after graduation", body: "What should I focus on in my last year to get a developer role?", department: "Computer Science" },
+];
+
+/**
+ * Demo activity between seeded members so every screen has data (connections, messages,
+ * pending requests, Need Board posts with responses). Fixed ids, so re-running is harmless.
+ */
+async function seedActivity(memberCount: number) {
+  const members = await db.user.findMany({
+    where: { email: { endsWith: "@demo.iba-connect.test" } },
+    orderBy: { email: "asc" },
+    take: Math.min(memberCount, 30),
+    select: { id: true },
+  });
+  if (members.length < 12) return { connections: 0, posts: 0 };
+  const now = Date.now();
+  let connections = 0;
+
+  // Accepted connections with a short chat
+  for (let i = 0; i + 1 < 12; i += 2) {
+    const [a, b] = [members[i].id, members[i + 1].id];
+    const id = stableUuid(`connection:${a}:${b}`);
+    await db.connection.upsert({
+      where: { id },
+      update: {},
+      create: { id, requesterId: a, recipientId: b, contextNote: NOTES[i % NOTES.length], status: "ACCEPTED", createdAt: new Date(now - 6 * DAY), respondedAt: new Date(now - 5 * DAY) },
+    });
+    for (let m = 0; m < CHAT.length; m++) {
+      const mid = stableUuid(`message:${id}:${m}`);
+      await db.message.upsert({
+        where: { id: mid },
+        update: {},
+        create: { id: mid, connectionId: id, senderId: m % 2 ? b : a, body: CHAT[m], sentAt: new Date(now - 5 * DAY + m * 3_600_000), readAt: new Date(now - 4 * DAY) },
+      });
+    }
+    connections++;
+  }
+  // Pending and declined requests
+  for (let i = 12; i + 1 < Math.min(members.length, 20); i += 2) {
+    const id = stableUuid(`connection:${members[i].id}:${members[i + 1].id}`);
+    const declined = i % 4 === 0;
+    await db.connection.upsert({
+      where: { id },
+      update: {},
+      create: {
+        id,
+        requesterId: members[i].id,
+        recipientId: members[i + 1].id,
+        contextNote: NOTES[i % NOTES.length],
+        status: declined ? "DECLINED" : "PENDING",
+        createdAt: new Date(now - 2 * DAY),
+        respondedAt: declined ? new Date(now - DAY) : null,
+      },
+    });
+    connections++;
+  }
+
+  // Need Board posts: open ones of different ages, one closed, one expired
+  let posts = 0;
+  for (let p = 0; p < POSTS.length; p++) {
+    const spec = POSTS[p];
+    const author = members[(p * 3) % members.length].id;
+    const id = stableUuid(`post:${p}`);
+    const course = spec.course ? await db.course.findUnique({ where: { code: spec.course }, select: { id: true } }) : null;
+    const createdAt = new Date(now - (p + 1) * DAY);
+    const status = p === 6 ? "CLOSED" : "OPEN";
+    const expiresAt = p === 7 ? new Date(now - DAY) : new Date(createdAt.getTime() + 14 * DAY);
+    await db.post.upsert({
+      where: { id },
+      update: {},
+      create: { id, authorId: author, type: spec.type, title: spec.title, body: spec.body, courseId: course?.id ?? null, departmentTag: spec.department ?? null, status, closedAt: status === "CLOSED" ? new Date(now - DAY) : null, createdAt, expiresAt },
+    });
+    posts++;
+    // A response from another member, which is a pending connection request carrying the post
+    if (p < 4) {
+      const responder = members[(p * 3 + 13) % members.length].id;
+      if (responder === author) continue;
+      const cid = stableUuid(`response-connection:${id}`);
+      const exists = await db.connection.findFirst({
+        where: { status: { in: ["PENDING", "ACCEPTED"] }, OR: [{ requesterId: responder, recipientId: author }, { requesterId: author, recipientId: responder }] },
+      });
+      if (exists && exists.id !== cid) continue;
+      await db.connection.upsert({
+        where: { id: cid },
+        update: {},
+        create: { id: cid, requesterId: responder, recipientId: author, contextNote: "I can help with this!", originPostId: id, createdAt: new Date(now - p * DAY) },
+      });
+      await db.postResponse.upsert({
+        where: { postId_responderId: { postId: id, responderId: responder } },
+        update: {},
+        create: { postId: id, responderId: responder, message: "I can help with this!", connectionId: cid },
+      });
+    }
+  }
+  return { connections, posts };
+}
+
 async function main() {
   const memberCount = Number(process.env.SEED_MEMBER_COUNT ?? 60);
   const courses = await seedCourses();
   const skills = await seedSkills();
   await seedMembers(memberCount, courses, skills);
+  const activity = await seedActivity(memberCount);
   const admins = await promoteAdmins();
   console.log(
-    `Seeded ${courses.length} courses, ${skills.length} skills, ${memberCount} demo members; promoted ${admins} admin(s).`,
+    `Seeded ${courses.length} courses, ${skills.length} skills, ${memberCount} demo members, ${activity.connections} connections and ${activity.posts} posts; promoted ${admins} admin(s).`,
   );
 }
 

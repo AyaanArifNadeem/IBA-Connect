@@ -19,7 +19,9 @@
     "postinstall": "prisma generate",
     "docs:build": "node scripts/build-docs.mjs",
     "docs:test-cases": "node scripts/export-test-cases.mjs",
-    "docs:erd": "node scripts/erd.mjs"
+    "docs:erd": "node scripts/erd.mjs",
+    "db:demo": "tsx prisma/demo-accounts.ts",
+    "supabase:setup": "node scripts/supabase-setup.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
