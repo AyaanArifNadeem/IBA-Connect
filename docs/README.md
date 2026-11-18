@@ -9,7 +9,7 @@ Living documents for the course, written in LaTeX and kept in the repository so 
 | `testing/` | Test plan, test cases (course template columns) and results |
 | `srs/` | Software Requirements Specification (versioned) |
 | `requirements/` | Use cases and user stories |
-| `api/` | OpenAPI specification for `/api/v1` |
+| `api/` | OpenAPI 3.1 specification for `/api/v1` (`openapi.yaml`, kept in sync with the routes by a test) |
 | `architecture/` | Architecture and ERD (kept in sync with `prisma/schema.prisma`) |
 | `manual/` | User manual with screenshots of the real app |
 | `common/` | Shared style (`ibaconnect.sty`) |
