@@ -1,9 +1,11 @@
 import "server-only";
 import { z } from "zod";
 import { validationFailed } from "@/lib/api/errors";
-import { BODY_MAX, POST_LIFETIME_DAYS, POST_TYPES, TITLE_MAX } from "@/lib/board";
+import { BODY_MAX, POST_LIFETIME_DAYS, POST_TYPE_SLUGS, POST_TYPES, TITLE_MAX, type PostTypeValue } from "@/lib/board";
 import { DEPARTMENTS } from "@/lib/constants/academics";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/lib/generated/prisma/client";
+import { PostStatus, UserStatus } from "@/lib/generated/prisma/enums";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 /** A need post (FR4.1): type, title and details required; an optional course OR department tag. */
@@ -53,3 +55,79 @@ export async function createPost(authorId: string, input: PostInput, now = new D
     },
   });
 }
+
+// ------------------------------------------------------------------ browse (FR4.2)
+
+export const BOARD_PAGE_SIZE = 20;
+
+const slugToType = Object.fromEntries(Object.entries(POST_TYPE_SLUGS).map(([type, slug]) => [slug, type])) as Record<string, PostTypeValue>;
+
+export const boardQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  type: z
+    .string()
+    .optional()
+    .transform((v, ctx) => {
+      if (!v) return undefined;
+      const type = slugToType[v];
+      if (!type) ctx.addIssue({ code: "custom", message: "Unknown post type" });
+      return type;
+    }),
+  course: z.string().trim().toUpperCase().max(12).optional(),
+  department: z.enum(DEPARTMENTS, { error: "Unknown department" }).optional(),
+  q: z.string().trim().max(100, "Search is too long").optional(),
+});
+
+export type BoardQuery = z.infer<typeof boardQuerySchema>;
+
+/** Open means not closed and not yet expired (FR4.4). Expiry is checked at read time, so no job is needed. */
+export const openPostWhere = (now = new Date()): Prisma.PostWhereInput => ({ status: PostStatus.OPEN, expiresAt: { gt: now } });
+
+/** Open posts from active members, newest first, filtered by type, tag and words (FR4.2, US4.2). */
+export async function listOpenPosts(viewerId: string, query: BoardQuery, now = new Date()) {
+  const words = (query.q ?? "").split(/\s+/).filter((w) => w.length >= 2).slice(0, 6);
+  const where: Prisma.PostWhereInput = {
+    AND: [
+      openPostWhere(now),
+      { author: { status: UserStatus.ACTIVE, deletedAt: null } },
+      query.type ? { type: query.type } : {},
+      query.course ? { course: { code: query.course } } : {},
+      query.department ? { departmentTag: query.department } : {},
+      ...words.map((w) => ({ OR: [{ title: { contains: w, mode: "insensitive" as const } }, { body: { contains: w, mode: "insensitive" as const } }] })),
+    ],
+  };
+  const [total, rows] = await Promise.all([
+    db.post.count({ where }),
+    db.post.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (query.page - 1) * BOARD_PAGE_SIZE,
+      take: BOARD_PAGE_SIZE,
+      include: {
+        author: { select: { id: true, name: true, avatarPath: true } },
+        course: { select: { code: true } },
+        _count: { select: { responses: true } },
+      },
+    }),
+  ]);
+  return {
+    page: query.page,
+    pages: Math.max(1, Math.ceil(total / BOARD_PAGE_SIZE)),
+    total,
+    posts: rows.map((p) => ({
+      id: p.id,
+      type: p.type as PostTypeValue,
+      title: p.title,
+      body: p.body,
+      courseCode: p.course?.code ?? null,
+      departmentTag: p.departmentTag,
+      createdAt: p.createdAt.toISOString(),
+      expiresAt: p.expiresAt.toISOString(),
+      author: { id: p.author.id, name: p.author.name, avatarPath: p.author.avatarPath },
+      mine: p.authorId === viewerId,
+      responses: p._count.responses,
+    })),
+  };
+}
+
+export type BoardPost = Awaited<ReturnType<typeof listOpenPosts>>["posts"][number];
