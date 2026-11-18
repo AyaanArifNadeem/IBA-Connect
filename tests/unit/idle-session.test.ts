@@ -53,6 +53,11 @@ describe("proxy with a signed-in member", () => {
     expect(res.headers.get("location")).toBe("http://localhost/sign-out?reason=idle");
   });
 
+  it("sends a signed-in member from the landing page to the dashboard", async () => {
+    const res = await run("/", Date.now());
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
+  });
+
   it("lets an active member through and records the activity", async () => {
     const res = await run("/dashboard", Date.now() - 10 * 60_000);
     expect(res.headers.get("location")).toBeNull();
