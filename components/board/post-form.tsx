@@ -63,7 +63,7 @@ export function PostForm({ courses, initial = EMPTY, postId }: Props) {
       return;
     }
     toast.success(editing ? "Post updated" : "Your post is on the board");
-    router.push(editing ? `/board/my-posts/${postId}` : "/board");
+    router.push(editing ? `/board/my-posts/${postId}` : `/board/my-posts/${result.data.id}`);
     router.refresh();
   }
 
