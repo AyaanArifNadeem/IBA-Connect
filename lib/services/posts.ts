@@ -255,3 +255,29 @@ export async function closePost(authorId: string, postId: string, now = new Date
   if (postState(p, now) !== "open") throw conflict("This post is already closed.");
   return db.post.update({ where: { id: postId }, data: { status: PostStatus.CLOSED, closedAt: now } });
 }
+
+// ------------------------------------------------------------------ edit (FR4.5)
+
+/** Edit: title, details and tag; the type cannot change. */
+export const postEditSchema = z
+  .object({
+    title: z.string().trim().min(3, "Give your post a title").max(TITLE_MAX, `The title can be at most ${TITLE_MAX} characters`),
+    body: z.string().trim().min(1, "Add some details").max(BODY_MAX, `The details can be at most ${BODY_MAX.toLocaleString("en")} characters`),
+    course: z.string().trim().toUpperCase().max(12).nullish().transform((v) => v || null),
+    department: z.enum(DEPARTMENTS, { error: "Unknown department" }).nullish().transform((v) => v ?? null),
+  })
+  .strict()
+  .refine((p) => !(p.course && p.department), { path: ["department"], message: "Tag a course or a department, not both" });
+
+/** Edit your own open post (FR4.5). Closed and expired posts cannot be edited. */
+export async function editPost(authorId: string, postId: string, input: z.infer<typeof postEditSchema>, now = new Date()) {
+  const p = await db.post.findUnique({ where: { id: postId }, select: { authorId: true, status: true, expiresAt: true } });
+  if (!p) throw notFound("This post could not be found.");
+  if (p.authorId !== authorId) throw new ApiError(403, "forbidden", "Only the author can edit this post.");
+  if (postState(p, now) !== "open") throw conflict("Closed and expired posts cannot be edited.");
+  const courseId = await resolveCourseTag(input.course);
+  return db.post.update({
+    where: { id: postId },
+    data: { title: input.title, body: input.body, courseId, departmentTag: input.department },
+  });
+}
