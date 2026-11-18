@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEPARTMENTS, MAX_SEMESTER, MIN_BATCH, MIN_SEMESTER, PROGRAMMES, maxBatch } from "@/lib/constants/academics";
+import { ALUMNI_FIELDS, DEPARTMENTS, MAX_SEMESTER, MIN_BATCH, MIN_SEMESTER, PROGRAMMES, maxBatch } from "@/lib/constants/academics";
 
 export const MAX_SKILLS = 15;
 export const MAX_COURSES = 40;
@@ -47,6 +47,9 @@ export const profileSchema = z.object({
       const seen = new Set<string>();
       return list.filter((s) => (seen.has(s.toLowerCase()) ? false : (seen.add(s.toLowerCase()), true)));
     }),
+  /** Alumni only (US1.7) */
+  field: z.enum(ALUMNI_FIELDS, { error: "Choose your field" }).nullable().optional(),
+  company: z.string().trim().max(80, "Company name is too long").nullable().optional(),
   courseIds: z.array(z.uuid()).max(MAX_COURSES, `Add at most ${MAX_COURSES} courses`).default([]),
 });
 
