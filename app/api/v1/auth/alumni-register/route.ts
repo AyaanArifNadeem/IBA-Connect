@@ -1,4 +1,4 @@
-import { ApiError, rateLimited } from "@/lib/api/errors";
+import { ApiError, rateLimited, validationFailed } from "@/lib/api/errors";
 import { created, route } from "@/lib/api/handler";
 import { clientIp, parseJson } from "@/lib/api/validation";
 import { db } from "@/lib/db";
@@ -44,6 +44,8 @@ export const POST = route(async (request) => {
     if (error.code === "over_email_send_rate_limit" || error.status === 429) {
       throw rateLimited("Too many emails sent. Please wait a few minutes and try again.", 300);
     }
+    // Supabase refuses addresses it cannot deliver to (for example reserved domains)
+    if (error.code === "email_address_invalid") throw validationFailed([{ path: "email", message: "Enter an email address you can receive mail at" }]);
     throw error;
   }
   // Supabase returns a user without identities when the email is already registered

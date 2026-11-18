@@ -1,4 +1,4 @@
-import { badRequest, rateLimited } from "@/lib/api/errors";
+import { badRequest, rateLimited, validationFailed } from "@/lib/api/errors";
 import { created, route } from "@/lib/api/handler";
 import { clientIp, parseJson } from "@/lib/api/validation";
 import { ibaEmailDomain, publicEnv } from "@/lib/env";
@@ -34,6 +34,7 @@ export const POST = route(async (request) => {
 
   if (error) {
     if (error.code === "weak_password") throw badRequest(error.message);
+    if (error.code === "email_address_invalid") throw validationFailed([{ path: "email", message: "Enter an email address you can receive mail at" }]);
     if (error.code === "over_email_send_rate_limit" || error.status === 429) {
       throw rateLimited("Too many emails sent. Please wait a few minutes and try again.", 300);
     }

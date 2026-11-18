@@ -35,7 +35,7 @@ export default async function DirectoryPage({ searchParams }: PageProps<"/direct
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[15rem_1fr]">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[15rem_1fr]">
         <aside>
           <FilterToggle count={activeFilterCount(query)}>
             <FilterPanel
@@ -56,20 +56,38 @@ export default async function DirectoryPage({ searchParams }: PageProps<"/direct
           ) : null}
 
           {result.members.length ? (
-            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {result.members.map((m) => (
-                <li key={m.id}>
+                <li key={m.id} className="min-w-0">
                   <MemberCard member={m} />
                 </li>
               ))}
             </ul>
           ) : (
             <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-              {filtered ? "No one matches. Remove a filter or " : "No one is here yet. "}
-              <Link href="/board" className="font-medium text-primary underline">
-                post on the Need Board
-              </Link>
-              .
+              {filtered ? (
+                <>
+                  <p className="font-medium text-foreground">No members found.</p>
+                  <p className="mt-1">
+                    <Link href="/directory" className="font-medium text-primary underline">
+                      Clear the search and filters
+                    </Link>{" "}
+                    or{" "}
+                    <Link href="/board" className="font-medium text-primary underline">
+                      post on the Need Board
+                    </Link>
+                    .
+                  </p>
+                </>
+              ) : (
+                <>
+                  No one is here yet.{" "}
+                  <Link href="/board" className="font-medium text-primary underline">
+                    Post on the Need Board
+                  </Link>
+                  .
+                </>
+              )}
             </div>
           )}
 
