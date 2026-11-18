@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { postJson } from '@/lib/client/api';
+import { createClient } from '@/lib/supabase/client';
 import { safeNextPath } from '@/lib/validation/auth';
 
 export default function SignIn() {
@@ -23,10 +24,32 @@ export default function SignIn() {
     const messages: Record<string, string> = {
       suspended: 'Your account is suspended. Contact the IBA Connect team.',
       idle: 'You were signed out after a period of inactivity. Please sign in again.',
+      'not-iba': 'Only verified @khi.iba.edu.pk Microsoft accounts can join. Alumni can verify their status instead.',
+      'microsoft-failed': 'Microsoft sign-in did not finish. Please try again, or sign in with your email.',
     };
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL once on load
     if (reason && messages[reason]) setError(messages[reason]);
   }, []);
+
+  // Microsoft (Entra ID) sign-in through Supabase; the server checks the IBA domain (FR1.1)
+  const handleMicrosoft = async () => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setError('Microsoft sign-in is not set up yet. Please sign in with your email.');
+      return;
+    }
+    setSubmitting(true);
+    const requested = new URLSearchParams(window.location.search).get('next');
+    const callback = new URL('/auth/callback', window.location.origin);
+    callback.searchParams.set('next', safeNextPath(requested, '/dashboard'));
+    const { error: oauthError } = await createClient().auth.signInWithOAuth({
+      provider: 'azure',
+      options: { redirectTo: callback.toString(), scopes: 'openid email profile' },
+    });
+    if (oauthError) {
+      setSubmitting(false);
+      setError('Microsoft sign-in did not start. Please try again, or sign in with your email.');
+    }
+  };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -197,7 +220,7 @@ export default function SignIn() {
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
 
-          <button className="w-full bg-[#8b0000] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#6b0000] hover:shadow-md transition-all active:scale-[0.98]">
+          <button type="button" onClick={handleMicrosoft} disabled={submitting} className="w-full bg-[#8b0000] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#6b0000] hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-60">
             Sign in with Microsoft (IBA)
           </button>
 
