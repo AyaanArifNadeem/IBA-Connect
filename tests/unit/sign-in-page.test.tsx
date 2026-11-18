@@ -43,11 +43,11 @@ describe("Sign-in page", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("rejects an email outside the IBA domain before calling the server", async () => {
-    const user = userEvent.setup();
-    render(<SignIn />);
-    await user.type(screen.getByPlaceholderText("name@khi.iba.edu.pk"), "someone@gmail.com");
-    expect(await screen.findByText("Only @khi.iba.edu.pk accounts can join")).toBeInTheDocument();
+  it("lets alumni sign in with a personal email (FR1.3)", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { data: { next: "/dashboard" } }));
+    await fillAndSubmit("bilal.khan@example.test");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard"));
+    expect(screen.queryByText("Only @khi.iba.edu.pk accounts can join")).not.toBeInTheDocument();
   });
 
   it("links to register, forgot password and alumni verification", () => {

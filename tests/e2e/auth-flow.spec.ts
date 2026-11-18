@@ -25,3 +25,11 @@ test("the register API validates input on the server", async ({ request }) => {
   const body = await res.json();
   expect(body.error.code).toBe("validation_failed");
 });
+
+test("the alumni verification page offers a code or the alumni list", async ({ page }) => {
+  await page.goto("/verify-alumni");
+  await expect(page.getByRole("heading", { name: "Alumni verification" })).toBeVisible();
+  await expect(page.getByLabel("Alumni code")).toBeVisible();
+  await page.getByText("My email is on the alumni list").click();
+  await expect(page.getByLabel("Alumni code")).toBeHidden();
+});
