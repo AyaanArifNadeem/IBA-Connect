@@ -28,7 +28,7 @@ export default async function EditProfilePage() {
             isAlumnus={member.role === Role.ALUMNUS}
             courses={courses}
             submitLabel="Save changes"
-            redirectTo="/profile/edit"
+            redirectTo="/profile"
             initial={{
               name: profile.name,
               batch: profile.batch ? String(profile.batch) : "",
