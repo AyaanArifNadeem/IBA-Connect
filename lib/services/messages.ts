@@ -87,6 +87,7 @@ export async function sendMessage(memberId: string, connectionId: string, body: 
 
 /** The member's conversations, most recent activity first, with the last message (P09 list). */
 export async function listConversations(memberId: string) {
+  const unread = await unreadByConversation(memberId);
   const connections = await db.connection.findMany({
     where: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] },
     include: {
@@ -104,6 +105,7 @@ export async function listConversations(memberId: string) {
         name: other.deletedAt ? "Deleted member" : other.name,
         avatarPath: other.deletedAt ? null : other.avatarPath,
         lastMessage: last ? { preview: last.body.slice(0, 80), sentAt: last.sentAt.toISOString(), mine: last.senderId === memberId } : null,
+        unread: unread.get(c.id) ?? 0,
         activity: (last?.sentAt ?? c.respondedAt ?? c.createdAt).getTime(),
       };
     })
@@ -111,3 +113,39 @@ export async function listConversations(memberId: string) {
 }
 
 export type ConversationSummary = Awaited<ReturnType<typeof listConversations>>[number];
+
+// ------------------------------------------------------------------ unread (US3.6)
+
+/** Mark the other member's messages in this chat as read (opening the chat, FR3.4). */
+export async function markRead(memberId: string, connectionId: string, now = new Date()) {
+  const result = await db.message.updateMany({
+    where: { connectionId, senderId: { not: memberId }, readAt: null, connection: { OR: [{ requesterId: memberId }, { recipientId: memberId }] } },
+    data: { readAt: now },
+  });
+  return result.count;
+}
+
+/** Unread messages per chat, for accepted connections only. */
+export async function unreadByConversation(memberId: string): Promise<Map<string, number>> {
+  const rows = await db.message.groupBy({
+    by: ["connectionId"],
+    where: {
+      senderId: { not: memberId },
+      readAt: null,
+      connection: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] },
+    },
+    _count: { _all: true },
+  });
+  return new Map(rows.map((r) => [r.connectionId, r._count._all]));
+}
+
+/** Total unread messages, for the Messages badge in the menu (FR3.6). */
+export async function unreadTotal(memberId: string): Promise<number> {
+  return db.message.count({
+    where: {
+      senderId: { not: memberId },
+      readAt: null,
+      connection: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] },
+    },
+  });
+}
