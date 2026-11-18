@@ -117,6 +117,6 @@ export function suggestSkills(query?: string) {
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
     select: { name: true },
     orderBy: { name: "asc" },
-    take: 20,
+    take: q ? 20 : 200,
   });
 }

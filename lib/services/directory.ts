@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { ALUMNI_FIELDS, DEPARTMENTS, PROGRAMMES } from "@/lib/constants/academics";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { Role, UserStatus } from "@/lib/generated/prisma/enums";
@@ -7,10 +8,26 @@ import { avatarUrls } from "@/lib/storage/avatars";
 
 export const PAGE_SIZE = 18;
 
-/** Directory query (FR2.1) with free-text search (FR2.2). Filters are added by FR2.3. */
+/** One value or several (?course=A&course=B), always returned as a list. */
+const list = <T extends z.ZodType>(item: T) =>
+  z.preprocess((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]), z.array(item).max(5));
+const flag = z.preprocess((v) => v === "1" || v === "true" || v === "on", z.boolean());
+
+/** Directory query: paging (FR2.1), free-text search (FR2.2) and filters (FR2.3). */
 export const directoryQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   q: z.string().trim().max(100, "Search is too long").optional(),
+  // Filters in the client's priority order (FR2.3)
+  course: list(z.string().trim().toUpperCase().max(12)),
+  skill: list(z.string().trim().max(40)),
+  advise: flag.default(false),
+  batch: z.coerce.number({ error: "Batch must be a year" }).int().min(1960).max(2100).optional(),
+  department: z.enum(DEPARTMENTS, { error: "Unknown department" }).optional(),
+  programme: z.enum(PROGRAMMES, { error: "Unknown programme" }).optional(),
+  // Alumni filters (US2.5); choosing a field or company implies alumni only
+  alumni: flag.default(false),
+  field: z.enum(ALUMNI_FIELDS, { error: "Unknown field" }).optional(),
+  company: z.string().trim().max(80).optional(),
 });
 
 export type DirectoryQuery = z.infer<typeof directoryQuerySchema>;
@@ -62,9 +79,38 @@ export function searchWhere(q: string | undefined): Prisma.UserWhereInput {
   };
 }
 
+/**
+ * Filters (FR2.3): every chosen filter must match. With "available to advise" and a course,
+ * the member must advise on that course (US2.4); with no course, advising on anything counts.
+ */
+export function filterWhere(query: DirectoryQuery): Prisma.UserWhereInput[] {
+  const and: Prisma.UserWhereInput[] = [];
+  for (const code of query.course) {
+    and.push({
+      courses: { some: { course: { code }, ...(query.advise ? { canAdvise: true } : {}) } },
+    });
+  }
+  for (const skill of query.skill) {
+    and.push({ skills: { some: { skill: { name: { equals: skill, mode: "insensitive" } } } } });
+  }
+  if (query.advise) and.push({ availableToAdvise: true });
+  if (query.batch) and.push({ batch: query.batch });
+  if (query.department) and.push({ department: query.department });
+  if (query.programme) and.push({ programme: query.programme });
+  if (query.alumni || query.field || query.company) and.push({ role: Role.ALUMNUS });
+  if (query.field) and.push({ field: query.field });
+  if (query.company) and.push({ company: { contains: query.company, mode: "insensitive" } });
+  return and;
+}
+
+/** Number of filters in use (shown on the phone "Filters (n)" button). */
+export function activeFilterCount(query: DirectoryQuery): number {
+  return filterWhere(query).length;
+}
+
 /** All the conditions for a directory query. */
 export function directoryWhere(query: DirectoryQuery): Prisma.UserWhereInput {
-  return searchWhere(query.q);
+  return { AND: [searchWhere(query.q), ...filterWhere(query)] };
 }
 
 /**
