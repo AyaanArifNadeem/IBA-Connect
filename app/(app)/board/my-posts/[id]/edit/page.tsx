@@ -38,7 +38,9 @@ export default async function EditPostPage({ params }: PageProps<"/board/my-post
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Edit post</CardTitle>
+        <CardTitle className="text-2xl">
+          <h1>Edit post</h1>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <PostForm

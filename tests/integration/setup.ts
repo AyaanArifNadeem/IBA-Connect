@@ -3,6 +3,8 @@
  * (CI starts one; locally point it at a throwaway database). The app's DATABASE_URL is set to
  * the same database so modules that import lib/db use it too.
  */
+import { vi } from "vitest";
+
 const url = process.env.TEST_DATABASE_URL;
 if (!url) {
   throw new Error(
@@ -11,3 +13,10 @@ if (!url) {
   );
 }
 process.env.DATABASE_URL = url;
+
+// Route handlers are called directly in these tests, outside a Next.js request, where
+// `connection()` (used to mark the session lookup as request-time) is not available.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: async () => {},
+}));
