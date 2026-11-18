@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-// @ts-expect-error: plain JavaScript build script
 import { currentDot, parseSchema } from "../../scripts/erd.mjs";
+
+type Field = { name: string; id: boolean; fk: boolean; isRelation: boolean };
+type Model = { name: string; fields: Field[] };
 
 const root = join(__dirname, "..", "..");
 
@@ -13,15 +15,14 @@ describe("ERD (docs/architecture)", () => {
   });
 
   it("reads every model, key and relation", () => {
-    const { models } = parseSchema(readFileSync(join(root, "prisma/schema.prisma"), "utf8"));
-    const names = models.map((m: { name: string }) => m.name);
-    expect(names).toEqual(expect.arrayContaining(["User", "Connection", "Message", "Post", "PostResponse", "Block"]));
-    const connection = models.find((m: { name: string }) => m.name === "Connection");
-    const field = (n: string) => connection.fields.find((f: { name: string }) => f.name === n);
+    const models = parseSchema(readFileSync(join(root, "prisma/schema.prisma"), "utf8")).models as unknown as Model[];
+    const model = (name: string) => models.find((m) => m.name === name)!;
+    expect(models.map((m) => m.name)).toEqual(expect.arrayContaining(["User", "Connection", "Message", "Post", "PostResponse", "Block"]));
+
+    const field = (name: string) => model("Connection").fields.find((f) => f.name === name)!;
     expect(field("id").id).toBe(true);
     expect(field("requesterId").fk).toBe(true);
     expect(field("requester").isRelation).toBe(true);
-    const userSkill = models.find((m: { name: string }) => m.name === "UserSkill");
-    expect(userSkill.fields.filter((f: { id: boolean }) => f.id).map((f: { name: string }) => f.name)).toEqual(["userId", "skillId"]);
+    expect(model("UserSkill").fields.filter((f) => f.id).map((f) => f.name)).toEqual(["userId", "skillId"]);
   });
 });
