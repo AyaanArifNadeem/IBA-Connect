@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { LAST_SEEN_COOKIE, idleLimitMs, isIdleExpired, shouldTouch } from "@/lib/auth/idle";
 
 /** Pages that need a signed-in member. API routes check access themselves (NFR7). */
 export const PROTECTED_PREFIXES = [
@@ -53,6 +54,27 @@ export async function updateSession(request: NextRequest) {
     signIn.pathname = "/sign-in";
     signIn.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(signIn);
+  }
+
+  // Idle sessions expire (FR1.6): sign out when the last request is older than the limit
+  if (signedIn && pathname !== "/sign-out") {
+    const now = Date.now();
+    const lastSeen = request.cookies.get(LAST_SEEN_COOKIE)?.value;
+    if (isIdleExpired(lastSeen, now)) {
+      const signOut = request.nextUrl.clone();
+      signOut.pathname = "/sign-out";
+      signOut.search = "?reason=idle";
+      return NextResponse.redirect(signOut);
+    }
+    if (shouldTouch(lastSeen, now)) {
+      response.cookies.set(LAST_SEEN_COOKIE, String(now), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: Math.ceil(idleLimitMs() / 1000),
+      });
+    }
   }
   return response;
 }

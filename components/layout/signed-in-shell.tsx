@@ -15,7 +15,8 @@ export async function SignedInShell({ children }: { children: ReactNode }) {
 
   const member = await getCurrentMember();
   if (!member || member.deletedAt) redirect("/sign-in");
-  if (member.status === UserStatus.SUSPENDED) redirect("/sign-in?reason=suspended");
+  // Suspended members are signed out on their next request (FR1.6, FR8.3)
+  if (member.status === UserStatus.SUSPENDED) redirect("/sign-out?reason=suspended");
 
   return (
     <AppShell
