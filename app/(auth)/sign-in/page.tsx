@@ -52,19 +52,10 @@ export default function SignIn() {
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setEmail(val);
-    
-    if (val.includes('@')) {
-      const domain = val.split('@')[1];
-      if (domain && !'khi.iba.edu.pk'.startsWith(domain)) {
-        setError('Only @khi.iba.edu.pk accounts can join');
-      } else {
-        setError(null);
-      }
-    } else {
-      setError(null);
-    }
+    // Any email can sign in: verified alumni use their personal email (FR1.3).
+    // New registrations are still limited to IBA emails on the register page.
+    setEmail(e.target.value);
+    setError(null);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,11 +72,6 @@ export default function SignIn() {
 
     if (!email || !password) {
       setError('Please fill out all fields');
-      return;
-    }
-
-    if (email && !email.endsWith('@khi.iba.edu.pk')) {
-      setError('Only @khi.iba.edu.pk accounts can join');
       return;
     }
 
