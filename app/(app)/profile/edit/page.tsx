@@ -19,7 +19,9 @@ export default async function EditProfilePage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Edit profile</CardTitle>
+          <CardTitle className="text-2xl">
+          <h1>Edit profile</h1>
+        </CardTitle>
           <CardDescription>Changes appear on your profile and in search straight away.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
