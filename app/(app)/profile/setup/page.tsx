@@ -19,7 +19,9 @@ export default async function ProfileSetupPage() {
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Set up your profile</CardTitle>
+        <CardTitle className="text-2xl">
+          <h1>Set up your profile</h1>
+        </CardTitle>
         <CardDescription>
           A few details so other members can find you by course and skill. You can change them any time.
         </CardDescription>

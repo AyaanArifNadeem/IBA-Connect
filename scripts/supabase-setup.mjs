@@ -70,8 +70,8 @@ let templates = true;
 if (res.status === 400 && (await res.clone().text()).includes("auth.email_templates")) {
   // Free projects can only change templates once custom SMTP (Brevo) is configured
   templates = false;
-  const { mailer_subjects_confirmation, mailer_templates_confirmation_content, mailer_subjects_recovery, mailer_templates_recovery_content, ...rest } = settings;
-  res = await patch(rest);
+  const withoutTemplates = Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith("mailer_subjects_") && !key.startsWith("mailer_templates_")));
+  res = await patch(withoutTemplates);
 }
 if (!res.ok) {
   console.error(`Auth: the Management API refused the update (HTTP ${res.status}). ${(await res.text()).slice(0, 300)}`);
