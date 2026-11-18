@@ -4,7 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export const ADMIN_TABS = [{ href: "/admin/alumni", label: "Alumni codes & list" }];
+export const ADMIN_TABS = [
+  { href: "/admin/alumni", label: "Alumni codes & list" },
+  { href: "/admin/courses", label: "Courses" },
+];
 
 export function AdminTabs() {
   const pathname = usePathname();
