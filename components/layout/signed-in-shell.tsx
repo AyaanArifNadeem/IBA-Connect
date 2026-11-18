@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { Role, UserStatus } from "@/lib/generated/prisma/enums";
 import { getCurrentMember, getIdentity } from "@/lib/auth/session";
+import { avatarUrl } from "@/lib/storage/avatars";
 import { AppShell } from "./app-shell";
 
 /**
@@ -20,7 +21,7 @@ export async function SignedInShell({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      user={{ name: member.name, avatarUrl: null, isAdmin: member.role === Role.ADMIN }}
+      user={{ name: member.name, avatarUrl: await avatarUrl(member.avatarPath), isAdmin: member.role === Role.ADMIN }}
       counts={{ requests: 0, messages: 0 }}
     >
       {children}

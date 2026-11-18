@@ -11,7 +11,11 @@ One-time configuration of the team's Supabase project. Secrets go in `.env.local
    - `DIRECT_URL`: *Session pooler* or direct connection (port 5432)
 4. Apply the schema and demo data: `npm run db:deploy` then `npm run db:seed`.
 
-## 2. Authentication settings
+## 2. Storage
+
+**Storage → New bucket**: name `avatars`, **Public: off**, file size limit 2 MB, allowed types `image/png, image/jpeg, image/webp`. The app uploads with the service-role key and shows photos through signed links that last an hour, so no storage policies are needed.
+
+## 3. Authentication settings
 
 **Authentication → URL Configuration**
 
@@ -32,7 +36,7 @@ One-time configuration of the team's Supabase project. Secrets go in `.env.local
 
 **Idle sessions (FR1.6)** are handled by the app, because Supabase's inactivity timeout needs a paid plan: set `SESSION_IDLE_DAYS` (default 7, to be confirmed by the team).
 
-## 3. Email through Brevo (custom SMTP)
+## 4. Email through Brevo (custom SMTP)
 
 Supabase's built-in email is heavily rate-limited, so Auth emails go through Brevo.
 
@@ -49,6 +53,6 @@ Supabase's built-in email is heavily rate-limited, so Auth emails go through Bre
 
 The app's own notification emails (for example new connection requests) use the Brevo API key in `BREVO_API_KEY`.
 
-## 4. Microsoft sign-in (FR1.1)
+## 5. Microsoft sign-in (FR1.1)
 
 Set up in backlog item US1.1. Until then, email and password sign-in carries the demo.
