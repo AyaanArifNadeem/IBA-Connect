@@ -39,6 +39,8 @@ export default async function ProfileSetupPage() {
             bio: profile.bio,
             skills: profile.skills,
             courseIds: profile.courses.map((c) => c.id),
+            field: profile.field ?? "",
+            company: profile.company ?? "",
           }}
         />
       </CardContent>

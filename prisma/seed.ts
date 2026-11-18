@@ -12,7 +12,7 @@ import { createHash } from "node:crypto";
 import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Role, VerificationMethod } from "../lib/generated/prisma/client";
-import { DEPARTMENTS, PROGRAMMES } from "../lib/constants/academics";
+import { ALUMNI_FIELDS as FIELDS, DEPARTMENTS, PROGRAMMES } from "../lib/constants/academics";
 
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
@@ -97,7 +97,7 @@ const LAST_NAMES = [
   "Khan", "Raza", "Siddiqui", "Qureshi", "Sheikh", "Malik", "Ahmed", "Hussain", "Baig", "Mirza",
   "Farooqui", "Hashmi", "Abbasi", "Chaudhry", "Jafri", "Rizvi", "Ansari", "Memon", "Shah", "Zaidi",
 ];
-const ALUMNI_FIELDS = ["Software", "Banking", "Consulting", "Marketing", "Data Science", "Accounting", "Research", "Entrepreneurship"];
+const ALUMNI_FIELDS = FIELDS.filter((f) => f !== "Other");
 const COMPANIES = ["Northwind Labs", "Contoso Bank", "Fabrikam Consulting", "Tailspin Analytics", "Adatum Group", "Litware Ltd", "Proseware Inc", "Own startup"];
 const BIOS = [
   "Happy to help juniors with course planning and study groups.",
