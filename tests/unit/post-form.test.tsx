@@ -28,7 +28,7 @@ describe("PostForm (US4.1, P11)", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("TC-075: publishes a study-partner post with a course tag and goes to the board", async () => {
+  it("TC-075: publishes a study-partner post with a course tag and opens it", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ data: { id: "p1" } }), { status: 201 }));
     render(<PostForm courses={courses} />);
@@ -39,7 +39,7 @@ describe("PostForm (US4.1, P11)", () => {
     expect(screen.getByText(/Closes automatically in 14 days/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Publish" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/board"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/board/my-posts/p1"));
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       type: "STUDY_PARTNER",
       title: "CSE341 study buddy",

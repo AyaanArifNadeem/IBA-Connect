@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BoardFilters } from "@/components/board/board-filters";
+import { BoardTabs } from "@/components/board/board-tabs";
 import { PostCard } from "@/components/board/post-card";
 import { RespondButton } from "@/components/board/respond-button";
 import { Pager } from "@/components/directory/pager";
@@ -36,6 +37,8 @@ export default async function BoardPage({ searchParams }: PageProps<"/board">) {
         </Link>
       </div>
 
+      <BoardTabs active="open" />
+
       <BoardFilters
         type={query.type}
         course={query.course}
@@ -61,7 +64,11 @@ export default async function BoardPage({ searchParams }: PageProps<"/board">) {
                 post={p}
                 avatarUrl={p.author.avatarPath ? avatars.get(p.author.avatarPath) : null}
                 action={
-                  p.mine ? null : (
+                  p.mine ? (
+                    <Link href={`/board/my-posts/${p.id}`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+                      Manage
+                    </Link>
+                  ) : (
                     <RespondButton post={{ id: p.id, type: p.type, title: p.title, authorName: p.author.name }} responded={p.respondedByMe} />
                   )
                 }
