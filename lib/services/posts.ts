@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { badRequest, conflict, notFound, validationFailed } from "@/lib/api/errors";
+import { ApiError, badRequest, conflict, notFound, validationFailed } from "@/lib/api/errors";
 import { BODY_MAX, POST_LIFETIME_DAYS, POST_TYPE_SLUGS, POST_TYPES, TITLE_MAX, type PostTypeValue } from "@/lib/board";
 import { DEPARTMENTS } from "@/lib/constants/academics";
 import { db } from "@/lib/db";
@@ -173,4 +173,85 @@ export async function respondToPost(responder: { id: string; name: string }, pos
     if (typeof err === "object" && err && "code" in err && err.code === "P2002") throw conflict("You already responded to this post.");
     throw err;
   }
+}
+
+// ----------------------------------------------------- my posts, close and expire (FR4.4)
+
+export type PostState = "open" | "closed" | "expired";
+
+/** A post is open until it is closed or its 14 days run out (FR4.4). */
+export function postState(p: { status: PostStatus; expiresAt: Date }, now = new Date()): PostState {
+  if (p.status === PostStatus.CLOSED) return "closed";
+  return p.expiresAt <= now ? "expired" : "open";
+}
+
+/** The author's posts, newest first, with their state (wireframe P12, left column). */
+export async function listMyPosts(authorId: string, now = new Date()) {
+  const rows = await db.post.findMany({
+    where: { authorId },
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { responses: true } } },
+    take: 100,
+  });
+  return rows.map((p) => ({
+    id: p.id,
+    type: p.type as PostTypeValue,
+    title: p.title,
+    state: postState(p, now),
+    expiresAt: p.expiresAt.toISOString(),
+    responses: p._count.responses,
+  }));
+}
+
+export type MyPostSummary = Awaited<ReturnType<typeof listMyPosts>>[number];
+
+/**
+ * One of the author's posts with every response (US4.4, US4.5): responses stay visible to the
+ * author after the post is closed or expires. Other members get 404.
+ */
+export async function getMyPost(authorId: string, postId: string, now = new Date()) {
+  const p = await db.post.findFirst({
+    where: { id: postId, authorId },
+    include: {
+      course: { select: { code: true } },
+      responses: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          responder: { select: { id: true, name: true, avatarPath: true, deletedAt: true } },
+          connection: { select: { id: true, status: true } },
+        },
+      },
+    },
+  });
+  if (!p) throw notFound("This post could not be found.");
+  return {
+    id: p.id,
+    type: p.type as PostTypeValue,
+    title: p.title,
+    body: p.body,
+    courseCode: p.course?.code ?? null,
+    departmentTag: p.departmentTag,
+    state: postState(p, now),
+    expiresAt: p.expiresAt.toISOString(),
+    closedAt: p.closedAt?.toISOString() ?? null,
+    responses: p.responses.map((r) => ({
+      id: r.id,
+      message: r.message,
+      createdAt: r.createdAt.toISOString(),
+      responder: { id: r.responder.id, name: r.responder.deletedAt ? "Deleted member" : r.responder.name, avatarPath: r.responder.deletedAt ? null : r.responder.avatarPath },
+      connectionId: r.connection.id,
+      connectionStatus: r.connection.status,
+    })),
+  };
+}
+
+export type MyPost = Awaited<ReturnType<typeof getMyPost>>;
+
+/** Close a post early (FR4.4, US4.4). Only the author, only while it is open. */
+export async function closePost(authorId: string, postId: string, now = new Date()) {
+  const p = await db.post.findUnique({ where: { id: postId }, select: { authorId: true, status: true, expiresAt: true } });
+  if (!p) throw notFound("This post could not be found.");
+  if (p.authorId !== authorId) throw new ApiError(403, "forbidden", "Only the author can close this post.");
+  if (postState(p, now) !== "open") throw conflict("This post is already closed.");
+  return db.post.update({ where: { id: postId }, data: { status: PostStatus.CLOSED, closedAt: now } });
 }
