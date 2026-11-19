@@ -66,8 +66,8 @@
       ],
       "data": "new.member@khi.iba.edu.pk / Str0ng!Pass",
       "expected": "Message asks to check email; verification email arrives",
-      "actual": "Partly run: POST /auth/register returned 201 with \"Check your email for a verification link...\". Arrival of the email still to be checked by hand once Brevo SMTP is set up.",
-      "result": ""
+      "actual": "Registered a real IBA address on /register: the page showed \"Check your email. We sent a verification link to <address>\". Brevo logged the email \"Confirm your IBA Connect account\" as delivered 8 s later, and the tester received it in the IBA mailbox.",
+      "result": "Pass"
     },
     {
       "id": "TC-005",
@@ -115,8 +115,8 @@
       ],
       "data": "Verification link",
       "expected": "Email verified; profile setup opens",
-      "actual": "",
-      "result": ""
+      "actual": "The tester clicked the link in that email: \"Set up your profile\" opened. The account's email was marked verified and a STUDENT member (verified by email) was created.",
+      "result": "Pass"
     },
     {
       "id": "TC-008",
@@ -179,8 +179,8 @@
       ],
       "data": "Registered email",
       "expected": "Confirmation shown; reset email arrives",
-      "actual": "",
-      "result": ""
+      "actual": "Forgot password for a registered alumnus: \"If an account uses that email, a reset link is on its way.\" The email \"Reset your IBA Connect password\" was delivered (Brevo) and arrived in the Gmail inbox.",
+      "result": "Pass"
     },
     {
       "id": "TC-012",
@@ -196,8 +196,8 @@
       ],
       "data": "N3w!Passw0rd",
       "expected": "Password changed; sign-in with the new password succeeds and the old one fails",
-      "actual": "",
-      "result": ""
+      "actual": "The reset link opened /reset-password; setting N3w!Passw0rd answered \"Your password has been changed. Sign in with your new password.\" Sign-in with the new password: 200; with the old one: 401 \"Incorrect email or password.\"",
+      "result": "Pass"
     },
     {
       "id": "TC-013",
@@ -247,8 +247,8 @@
       ],
       "data": "Active code",
       "expected": "Account verified as alumnus; code marked as claimed",
-      "actual": "",
-      "result": ""
+      "actual": "Admin issued a code; registering a personal Gmail address with it returned 201 \"You are verified as an alumnus...\". The confirmation email arrived in the Gmail inbox and its link opened profile setup. The member is ALUMNUS (ALUMNI_CODE), signs in, and the code is marked claimed by them.",
+      "result": "Pass"
     },
     {
       "id": "TC-016",
@@ -264,8 +264,8 @@
       ],
       "data": "alumnus@example.test",
       "expected": "Account verified as alumnus",
-      "actual": "",
-      "result": ""
+      "actual": "Admin uploaded a CSV with one personal Gmail address; registering that address with the list option returned 201. The confirmation email arrived in the Gmail inbox and its link opened profile setup. The member is ALUMNUS (ALUMNI_LIST) and signs in.",
+      "result": "Pass"
     },
     {
       "id": "TC-017",
@@ -593,7 +593,7 @@
       ],
       "data": "-",
       "expected": "Account unchanged",
-      "actual": "Without the \"DELETE\" confirmation: 400; account unchanged (status ACTIVE, not deleted: true). The dialog's Cancel button is in the human checklist.",
+      "actual": "Without the \"DELETE\" confirmation: 400; account unchanged (status ACTIVE, not deleted). Checked by hand on 19 Nov 2026: Settings > Delete account > Cancel closed the dialog; still signed in and the account was unchanged.",
       "result": "Pass"
     },
     {
@@ -1100,8 +1100,8 @@
       ],
       "data": "Recipient with a real inbox",
       "expected": "Email with the requester's name and a link to Requests",
-      "actual": "Blocked: the request was created, but no email was sent because BREVO_API_KEY is not set yet (the server logged the failed email). To be run once Brevo is set up.",
-      "result": ""
+      "actual": "The demo student sent a request to an alumnus with a Gmail address: 201. The email \"Ali Student wants to connect on IBA Connect\" arrived in the Gmail inbox; it shows the note and its \"Open requests\" button leads to /requests.",
+      "result": "Pass"
     },
     {
       "id": "TC-069",
@@ -1384,8 +1384,8 @@
       ],
       "data": "-",
       "expected": "Every control reachable; focus ring always visible",
-      "actual": "",
-      "result": ""
+      "actual": "Checked by hand on 19 Nov 2026 as the demo student, using only Tab, Shift+Tab, Enter, Space and Esc: directory search, a member profile, Messages (sent a message) and posting a need. Every control was reachable and the focus ring was always visible.",
+      "result": "Pass"
     },
     {
       "id": "TC-087",

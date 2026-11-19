@@ -47,9 +47,18 @@ const recoveryTemplate = `<h2>Reset your IBA Connect password</h2>
 <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Choose a new password</a></p>
 <p>If this was not you, you can ignore this email; your password will not change.</p>`;
 
+const authConfigUrl = `https://api.supabase.com/v1/projects/${projectRef}/config/auth`;
+const current = await fetch(authConfigUrl, { headers: { Authorization: `Bearer ${token}` } });
+if (!current.ok) {
+  console.error(`Auth: could not read the current settings (HTTP ${current.status}). Check SUPABASE_ACCESS_TOKEN.`);
+  process.exit(1);
+}
+// Keep the redirect URLs already added in the dashboard (Vercel previews); never allow every *.vercel.app site
+const existingUrls = ((await current.json()).uri_allow_list ?? "").split(",").map((v) => v.trim()).filter((v) => v && v !== "https://*.vercel.app/**");
+
 const settings = {
   site_url: siteUrl,
-  uri_allow_list: ["http://localhost:3000/**", `${siteUrl}/**`, "https://*.vercel.app/**"].filter((v, i, a) => a.indexOf(v) === i).join(","),
+  uri_allow_list: [...existingUrls, "http://localhost:3000/**", `${siteUrl}/**`].filter((v, i, a) => a.indexOf(v) === i).join(","),
   password_min_length: 8,
   mailer_autoconfirm: false,
   mailer_subjects_confirmation: "Confirm your IBA Connect account",
@@ -59,7 +68,7 @@ const settings = {
 };
 
 const patch = (body) =>
-  fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
+  fetch(authConfigUrl, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
