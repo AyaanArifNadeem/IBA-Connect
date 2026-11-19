@@ -1,6 +1,6 @@
 \documentclass[10pt,a4paper]{article}
 \usepackage{ibaconnect}
-\docinfo{Test Results (Sprint 1)}{1.1}{19 Nov 2026}
+\docinfo{Test Results (Sprint 1)}{1.2}{19 Nov 2026}
 
 \IfFileExists{generated/test-cases.tex}{\input{generated/test-cases.tex}}{%
   \PackageError{testresults}{Run npm run docs:build (it exports test-cases.json first)}{}}
@@ -27,15 +27,12 @@ Not yet run & \tcnotrun\\
 \midrule
 19 Nov 2026 & Ahmed Abdul Rahim & \texttt{a72a7fc} & \textbf{Real backend.} Production build run locally against the team's Supabase project (database, auth and storage). \texttt{npm run test:e2e:real}: 60 automated tests covering 82 test cases, all passed (TC-004 skipped because it sends a real email). Demo accounts plus throwaway accounts, deleted after the run.\\
 19 Nov 2026 & Ahmed Abdul Rahim & \texttt{a72a7fc} & \textbf{Integration.} 202 integration tests on PostgreSQL with the project migrations, all passed. TC-050 is taken from the search performance test (1,000 members).\\
+19 Nov 2026 & Ahmed Abdul Rahim & \texttt{f0d48e4} & \textbf{Manual.} TC-086 (keyboard only, as the demo student) and the Cancel button of the delete dialog in TC-036, in a desktop browser.\\
+19 Nov 2026 & Ahmed Abdul Rahim & \texttt{f0d48e4} & \textbf{Email.} Production build run locally against Supabase with Brevo (email API and Supabase custom SMTP). TC-004, 007, 011, 012, 015, 016 and 068 with real inboxes: the tester's IBA mailbox for TC-004 and TC-007, a personal Gmail with +tags for the rest. Brevo's log showed every email as delivered and the tester confirmed each one arrived. Test accounts deleted afterwards.\\
 \bottomrule
 \end{tabularx}
 
-\textbf{Not yet run} (they need an outside service or a person):
-\begin{itemize}
-\item TC-001, TC-002: Microsoft sign-in needs the Azure app registration.
-\item TC-004, TC-007, TC-011, TC-012, TC-015, TC-016, TC-068: need real emails to arrive, so they wait for Brevo (email API and Supabase custom SMTP). The server-side rules behind them pass in the integration tests.
-\item TC-086: keyboard-only use is checked by hand.
-\end{itemize}
+\textbf{Not yet run:} TC-001 and TC-002. Microsoft sign-in needs the Azure app registration.
 
 \section*{Results by test case}
 {\small
