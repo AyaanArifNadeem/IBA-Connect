@@ -1,0 +1,319 @@
+// IBA Connect data model (SRS section 6), Sprint 1 scope: identity and profiles (F1),
+// directory (F2), connections and messaging (F3) and the Need Board (F4).
+// Groups, files, reports and the full moderation model arrive in Sprint 2.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- Identity (F1)
+
+enum Role {
+  STUDENT
+  ALUMNUS
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum VerificationMethod {
+  MICROSOFT
+  EMAIL
+  ALUMNI_CODE
+  ALUMNI_LIST
+}
+
+/// One row per member. `id` equals the Supabase Auth user id.
+model User {
+  id                 String             @id @db.Uuid
+  /// Sign-in email (IBA address, or a personal address for alumni). Shown only to accepted connections (FR3.5).
+  email              String             @unique
+  /// Personal email an alumnus verified with (FR1.3).
+  personalEmail      String?            @unique
+  role               Role               @default(STUDENT)
+  status             UserStatus         @default(ACTIVE)
+  verificationMethod VerificationMethod
+
+  // Profile (FR1.4). Required fields are nullable until profile setup is finished.
+  name              String
+  avatarPath        String?
+  batch             Int?
+  programme         String?
+  department        String?
+  semester          Int?
+  /// Maximum 500 characters (SRS 6.3)
+  bio               String?            @db.VarChar(500)
+  availableToAdvise Boolean            @default(false)
+  /// Alumni only (US1.7)
+  field             String?
+  company           String?
+  profileCompletedAt DateTime?
+
+  lastActiveAt DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  /// Set when the account is deleted and its personal data anonymised (FR1.8)
+  deletedAt    DateTime?
+
+  courses             UserCourse[]
+  skills              UserSkill[]
+  claimedAlumniRecord AlumniRecord?  @relation("ClaimedBy")
+  issuedAlumniRecords AlumniRecord[] @relation("IssuedBy")
+  sentRequests        Connection[]   @relation("Requester")
+  receivedRequests    Connection[]   @relation("Recipient")
+  messages            Message[]
+  posts               Post[]
+  postResponses       PostResponse[]
+  blocking            Block[]        @relation("Blocker")
+  blockedBy           Block[]        @relation("Blocked")
+  adminActions        AdminAction[]
+  rateLimitHits       RateLimitHit[]
+
+  @@index([status, profileCompletedAt])
+  @@index([batch])
+  @@index([department])
+  @@index([programme])
+  /// Fast partial-match search on names (FR2.2, NFR1)
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "User_name_trgm_idx")
+}
+
+enum AlumniRecordKind {
+  /// Code or invite issued by the administration
+  CODE
+  /// Entry from the university-supplied alumni list
+  LIST_ENTRY
+}
+
+/// Alumni codes and alumni list entries (FR1.3, FR1.9). Each record is claimed by at most one user.
+model AlumniRecord {
+  id            String           @id @default(uuid()) @db.Uuid
+  kind          AlumniRecordKind
+  /// For CODE records: the code the alumnus types in
+  inviteCode    String?          @unique
+  /// For LIST_ENTRY records: the personal email on the alumni list
+  personalEmail String?          @unique
+  name          String?
+  batch         Int?
+  expiresAt     DateTime?
+  revokedAt     DateTime?
+  claimedById   String?          @unique @db.Uuid
+  claimedAt     DateTime?
+  createdById   String?          @db.Uuid
+  createdAt     DateTime         @default(now())
+
+  claimedBy User? @relation("ClaimedBy", fields: [claimedById], references: [id], onDelete: SetNull)
+  createdBy User? @relation("IssuedBy", fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+/// Team-maintained course list (FR1.10)
+model Course {
+  id         String    @id @default(uuid()) @db.Uuid
+  code       String    @unique
+  title      String
+  department String
+  retiredAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  takenBy UserCourse[]
+  posts   Post[]
+
+  @@index([department])
+  @@index([code(ops: raw("gin_trgm_ops"))], type: Gin, map: "Course_code_trgm_idx")
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Course_title_trgm_idx")
+}
+
+/// Courses a member has taken, with the per-course advise flag (FR1.4, FR1.5)
+model UserCourse {
+  userId        String  @db.Uuid
+  courseId      String  @db.Uuid
+  semesterTaken String?
+  canAdvise     Boolean @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  @@id([userId, courseId])
+  @@index([courseId, canAdvise])
+}
+
+/// Shared skill list. `slug` is the lower-case, trimmed name used for matching.
+model Skill {
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+  slug String @unique
+
+  users UserSkill[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Skill_name_trgm_idx")
+}
+
+model UserSkill {
+  userId  String @db.Uuid
+  skillId String @db.Uuid
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@index([skillId])
+}
+
+// ------------------------------------------------------- Connections and chat (F3)
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+/// A connection request and, once accepted, the connection itself (FR3.1, FR3.2)
+model Connection {
+  id           String           @id @default(uuid()) @db.Uuid
+  requesterId  String           @db.Uuid
+  recipientId  String           @db.Uuid
+  status       ConnectionStatus @default(PENDING)
+  /// Maximum 300 characters (SRS 6.3)
+  contextNote  String           @db.VarChar(300)
+  /// Set when the request came from a Need Board response (FR4.3)
+  originPostId String?          @db.Uuid
+  createdAt    DateTime         @default(now())
+  respondedAt  DateTime?
+
+  requester    User          @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient    User          @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  originPost   Post?         @relation(fields: [originPostId], references: [id], onDelete: SetNull)
+  messages     Message[]
+  postResponse PostResponse?
+
+  @@index([requesterId, createdAt])
+  @@index([recipientId, status])
+  @@index([requesterId, recipientId])
+}
+
+/// Private 1:1 messages, only within accepted connections (FR3.4, FR3.8)
+model Message {
+  id           String    @id @default(uuid()) @db.Uuid
+  connectionId String    @db.Uuid
+  senderId     String    @db.Uuid
+  /// Text only, maximum 2,000 characters (FR3.8)
+  body         String    @db.VarChar(2000)
+  sentAt       DateTime  @default(now())
+  readAt       DateTime?
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  sender     User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, sentAt])
+  @@index([connectionId, readAt])
+}
+
+/// A blocked member can no longer send requests or messages to the blocker (FR3.7)
+model Block {
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+// ---------------------------------------------------------------- Need Board (F4)
+
+enum PostType {
+  STUDY_PARTNER
+  PROJECT_TEAMMATE
+  COURSE_ADVICE
+  CAREER_ADVICE
+}
+
+enum PostStatus {
+  OPEN
+  CLOSED
+}
+
+/// Need Board post (FR4.1). A post is open while status = OPEN and expiresAt is in the future (FR4.4).
+model Post {
+  id            String     @id @default(uuid()) @db.Uuid
+  authorId      String     @db.Uuid
+  type          PostType
+  courseId      String?    @db.Uuid
+  departmentTag String?
+  title         String     @db.VarChar(120)
+  body          String     @db.VarChar(2000)
+  status        PostStatus @default(OPEN)
+  /// createdAt + 14 days
+  expiresAt     DateTime
+  closedAt      DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  course      Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  responses   PostResponse[]
+  connections Connection[]
+
+  @@index([status, expiresAt])
+  @@index([type])
+  @@index([courseId])
+  @@index([authorId])
+}
+
+/// A response to a post; each one opens a connection request (FR4.3)
+model PostResponse {
+  id           String   @id @default(uuid()) @db.Uuid
+  postId       String   @db.Uuid
+  responderId  String   @db.Uuid
+  message      String   @db.VarChar(300)
+  connectionId String   @unique @db.Uuid
+  createdAt    DateTime @default(now())
+
+  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  responder  User       @relation(fields: [responderId], references: [id], onDelete: Cascade)
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, responderId])
+}
+
+// ------------------------------------------------------------ Audit and limits
+
+/// Audit trail of administrator actions (FR8.4); Sprint 1 records alumni code and course changes.
+model AdminAction {
+  id         String   @id @default(uuid()) @db.Uuid
+  adminId    String?  @db.Uuid
+  action     String
+  targetType String
+  targetId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+/// Fixed-window counters for rate-limited actions (NFR20), kept in Postgres so no extra service is needed.
+model RateLimitHit {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// e.g. "auth:sign-in:<ip>" or "connection:<userId>"
+  key       String
+  userId    String?  @db.Uuid
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([key, createdAt])
+}

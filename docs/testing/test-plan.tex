@@ -1,0 +1,80 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\docinfo{Test Plan}{1.0}{17 Nov 2026}
+
+\begin{document}
+\makedoctitle
+
+\section{Purpose and scope}
+This plan describes how IBA Connect is tested in Sprint 1. It covers the 26 functional requirements of features F1 (Identity \& verified profile), F2 (Directory \& search), F3 (Connections \& messaging) and F4 (Need Board), and the non-functional requirements that apply to every sprint: security and authorisation (NFR5--NFR9, NFR20), privacy (NFR10, NFR11), performance (NFR1, NFR2), usability (NFR13, NFR14, NFR17) and maintainability (NFR15, NFR21).
+
+\textbf{Out of scope for Sprint 1:} groups, files, reporting and the admin moderation panel (Sprint 2); load testing beyond the 1,000-member search test; browsers older than the two latest major versions (NFR16).
+
+\section{Approach}
+Testing follows the Definition of Done: an item is done only when its test cases have been executed and the results recorded. Every requirement in scope has at least one positive and one negative test case (\emph{Test Cases} document), and every High-priority requirement has at least one automated test or a documented manual test case (NFR21).
+
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+\textbf{Level} & \textbf{What it checks} & \textbf{Tool}\\
+\midrule
+Unit & Validation rules, access decisions, helpers, components in isolation & Vitest, Testing Library\\
+Integration & Services and API logic against a real, migrated PostgreSQL database: limits, cooldowns, visibility rules, database constraints & Vitest + PostgreSQL\\
+End-to-end & Main flows in a real browser, on desktop and at 360 px: sign up $\rightarrow$ verify $\rightarrow$ profile $\rightarrow$ search $\rightarrow$ request $\rightarrow$ accept $\rightarrow$ chat $\rightarrow$ post a need & Playwright\\
+Manual & Flows that depend on outside services (Microsoft sign-in, real email delivery), visual checks against the wireframes, keyboard-only use & Test case table\\
+Static & Lint and type-check on every change (NFR15) & ESLint, TypeScript\\
+\bottomrule
+\end{tabularx}
+
+\textbf{Traceability:} each automated test that covers a test case includes its ID in the test name (for example \texttt{TC-054}), so results can be traced from requirement to test case to automated test.
+
+\section{Environments and test data}
+\begin{itemize}
+\item \textbf{Local:} developer machine with a throwaway PostgreSQL database for integration tests.
+\item \textbf{CI (GitHub Actions):} every pull request runs lint, type-check, unit tests, integration tests against a fresh PostgreSQL container (migrations applied, schema drift checked, demo data seeded), the production build and the end-to-end tests.
+\item \textbf{Real backend (local build + the team's Supabase project):} \texttt{npm run test:e2e:real} runs the test cases that can be automated end to end against the real database, auth and storage, with the demo accounts and throwaway accounts it creates and deletes. It needs the project's secrets, so it is run by a developer, not in CI. \texttt{scripts/record-test-results.mjs} copies its outcomes into the test case table.
+\item \textbf{Preview / production (Vercel + Supabase):} manual test runs and the sprint demo.
+\item \textbf{Test data:} the seed script creates the course list, skills and fictional members (reserved \texttt{.test} email domain, no real personal data). \texttt{SEED\_MEMBER\_COUNT=1000} creates the dataset for the search performance test (NFR2). Test accounts for manual runs are created by the testers and never use real students' details.
+\end{itemize}
+
+\section{Entry and exit criteria}
+\textbf{Entry} (an item is ready to test): the pull request is open, CI is green, and the build is available on a preview or local environment.
+
+\textbf{Exit} (an item passes): all its test cases have been executed; all High-priority cases pass; any failure is logged as a defect and either fixed or accepted by the Product Owner.
+
+\textbf{Release} (Sprint 1 release to \texttt{main}): a full regression run of all Sprint 1 test cases on the release branch, with results recorded in the \emph{Test Results} document.
+
+\section{Specific checks}
+\begin{itemize}
+\item \textbf{Authorisation (NFR7):} every API route is called without a session, with another member's session and as a non-admin, and must refuse.
+\item \textbf{Privacy (NFR10, FR3.5):} email addresses must not appear in directory responses, profile responses or page source unless the members are connected.
+\item \textbf{Performance (NFR1):} 100 searches with mixed keywords on 1,000 seeded members; the 95th percentile response time must be under 2 seconds.
+\item \textbf{Sessions (FR1.6):} idle sessions expire after the inactivity limit configured in Supabase Auth (the SRS sets no value; 7 days is proposed, to be confirmed by the team); suspended members are signed out on their next request.
+\item \textbf{Accessibility (NFR17):} keyboard-only walkthrough of the main flows with visible focus; images have text alternatives.
+\end{itemize}
+
+\section{Defect management}
+Defects are logged as GitHub issues using the bug template, linked to the failing test case, and fixed on a \texttt{fix/<issue>-<slug>} branch through a pull request with a test that reproduces the defect.
+
+\section{Roles}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+QA / Test Lead (Shaharyar Ahmed) & Owns this plan and the test cases; executes manual runs and records results.\\
+Technical Lead (Ahmed Abdul Rahim) & Automated tests and CI; reviews that each pull request includes its tests.\\
+All developers & Write unit and integration tests with their changes; fix defects in their area.\\
+Product Owner (Ayaan Arif Nadeem) & Accepts completed items against the acceptance criteria.\\
+\bottomrule
+\end{tabularx}
+
+\section{Risks}
+\begin{itemize}
+\item Microsoft sign-in may need IBA tenant admin consent: the email-and-password flow is tested fully so the demo does not depend on it.
+\item Supabase free projects pause after about a week of inactivity: wake the project before every test run and demo.
+\item Free email quota (Brevo, about 300 emails a day): email tests use a small number of real inboxes.
+\end{itemize}
+
+\section*{Revision history}
+\begin{revisions}
+1.0 & 17 Nov 2026 & Ahmed Abdul Rahim & First version for Sprint 1.\\
+\end{revisions}
+
+\end{document}

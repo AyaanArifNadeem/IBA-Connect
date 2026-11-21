@@ -1,0 +1,34 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+export const ADMIN_TABS = [
+  { href: "/admin/alumni", label: "Alumni codes & list" },
+  { href: "/admin/courses", label: "Courses" },
+];
+
+export function AdminTabs() {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto border-b">
+      {ADMIN_TABS.map((tab) => {
+        const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground",
+              active ? "border-primary text-foreground" : "border-transparent",
+            )}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

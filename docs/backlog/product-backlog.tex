@@ -1,0 +1,88 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\docinfo{Product Backlog}{1.0}{17 Nov 2026}
+
+\begin{document}
+\makedoctitle
+
+The product backlog lists every functional requirement in the SRS (FR1.1--FR8.5), with its priority, linked user stories (US IDs from the Use Cases and User Stories document), the sprint it is planned for, and its story points. It is a living document: update it through a \texttt{docs/*} pull request whenever priorities, estimates or scope change.
+
+\textbf{Scope decisions (sprint planning meeting):} Sprint 1 delivers F1--F4. Sprint 2 delivers F5, F6, F8 and one replacement feature for F7; practice quizzes (F7) are dropped from scope. The F7 replacement will be added here once the Product Owner confirms it.
+
+\textbf{Story points:} Sprint 1 points are the Technical Lead's \emph{proposed} estimates (Fibonacci scale, 1 point $\approx$ half a day), to be confirmed by the team. Sprint 2 items are estimated at Sprint 2 planning. \textbf{Pri.} is the SRS priority.
+
+\section*{Backlog}
+{\small
+\begin{longtable}{@{}p{12mm} >{\raggedright\arraybackslash}p{78mm} p{9mm} >{\raggedright\arraybackslash}p{22mm} c c@{}}
+\toprule
+\textbf{ID} & \textbf{Backlog item} & \textbf{Pri.} & \textbf{User stories} & \textbf{Pts} & \textbf{Sprint}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\featrow{6}{F1 \; Identity \& verified profile \hfill 41 pts}
+FR1.1 & University sign-in with Microsoft (Entra ID); IBA domain checked on the server & High & US1.1 & 5 & 1\\
+FR1.2 & Email + password fallback: register, verify email, forgot and change password & High & US1.2, US1.3 & 8 & 1\\
+FR1.3 & Alumni verification by admin code / invite or personal email on the alumni list & High & US1.4 & 3 & 1\\
+FR1.4 & Create and edit profile (name, batch, programme, department, semester, bio, skills; courses, photo); alumni field and company & High & US1.5--US1.7 & 9 & 1\\
+FR1.5 & ``Available to advise'' toggle with chosen courses; badge and search filter & High & US1.8 & 2 & 1\\
+FR1.6 & Sign out; idle sessions expire; suspended users signed out & High & -- & 3 & 1\\
+FR1.7 & Dashboard: pending requests, unread messages, my posts, shortcuts & High & -- & 3 & 1\\
+FR1.8 & Deactivate or delete account (profile leaves directory, records anonymised) & Med & -- & 3 & 1\\
+FR1.9 & Admin: create, expire and revoke alumni codes; upload alumni list & High & -- & 3 & 1\\
+FR1.10 & Admin: add, edit and retire courses in the course list & Med & -- & 2 & 1\\
+\featrow{6}{F2 \; Directory \& search \hfill 13 pts}
+FR2.1 & Browse paginated directory and view profiles (no contact details shown) & High & US2.1, US2.6 & 5 & 1\\
+FR2.2 & Free-text search across name, skill and course (under 2 s) & High & US2.2 & 3 & 1\\
+FR2.3 & Filters: course, skill, advise, batch, department/programme; alumni field and company & High & US2.3--US2.5 & 5 & 1\\
+\featrow{6}{F3 \; Connections \& messaging \hfill 19 pts}
+FR3.1 & Send connection request with a note; about 10 per day; cooldown & High & US3.1, US3.2 & 5 & 1\\
+FR3.2 & Accept or decline a request; chat opens only after accept & High & US3.3 & 2 & 1\\
+FR3.3 & Requests inbox: incoming, outgoing, accepted & High & US3.4 & 2 & 1\\
+FR3.4 & Private 1:1 chat between accepted connections, with unread indicators & High & US3.5, US3.6 & 4 & 1\\
+FR3.5 & Email visible only after a connection is accepted & High & US3.7 & 1 & 1\\
+FR3.6 & Email for new requests; in-app unread badges & Med & -- & 2 & 1\\
+FR3.7 & Block a user (no more requests or messages from them) & Med & -- & 2 & 1\\
+FR3.8 & Chat rules: text only, max 2,000 characters, polling & Med & -- & 1 & 1\\
+\featrow{6}{F4 \; Need Board \hfill 11 pts}
+FR4.1 & Create a need post: 4 types, optional course or department tag & High & US4.1 & 3 & 1\\
+FR4.2 & Browse open posts and filter by type and tag & High & US4.2 & 2 & 1\\
+FR4.3 & Respond to a post (opens a connection request with the post attached) & High & US4.3 & 3 & 1\\
+FR4.4 & Posts expire after 14 days or are closed early; responses stay visible & High & US4.4, US4.5 & 2 & 1\\
+FR4.5 & Edit own open post (title, body, tag) & Low & -- & 1 & 1\\
+\featrow{6}{F5 \; Study / project groups}
+FR5.1 & Create a group (study or project label); creator becomes admin & High & US5.1 & -- & 2\\
+FR5.2 & Private, invite-only: join by link or added by creator; not searchable & High & US5.2, US5.3 & -- & 2\\
+FR5.3 & Group content visible to members only & High & US5.4 & -- & 2\\
+FR5.4 & Remove members, revoke / regenerate invite link, leave group & High & -- & -- & 2\\
+FR5.5 & Delete group (soft delete) or transfer the admin role & Med & -- & -- & 2\\
+\featrow{6}{F6 \; Resource sharing}
+FR6.1 & Upload PDF, DOCX, PPTX or images, max 25 MB; no archives or executables & High & US6.1, US6.2 & -- & 2\\
+FR6.2 & Download files through signed, time-limited links & High & US6.3 & -- & 2\\
+FR6.3 & Delete a file (uploader or group admin only; soft delete) & Med & US6.4 & -- & 2\\
+\featrow{6}{F7 \; Practice quizzes \hfill \textit{dropped from scope; replacement feature to be confirmed}}
+FR7.1 & Create a quiz by hand: multiple choice and true/false & -- & US7.1 & -- & --\\
+FR7.2 & Attempt a quiz and get a score & -- & US7.2 & -- & --\\
+FR7.3 & Personal score history (no leaderboard) & -- & US7.3 & -- & --\\
+FR7.4 & Author or group admin edits / deletes a quiz; attempts kept & -- & -- & -- & --\\
+FR7.5 & Quiz rules: 1+ question; MCQ 2--6 options, one correct; unlimited retakes & -- & -- & -- & --\\
+\featrow{6}{F8 \; Reporting \& admin panel}
+FR8.1 & Report a profile, message, post, file or group & Med & US8.1 & -- & 2\\
+FR8.2 & Admin panel: review reports; hide / remove, warn, suspend & Med & US8.2, US8.3 & -- & 2\\
+FR8.3 & Suspended users cannot sign in; warned users see the warning at next sign-in & Med & -- & -- & 2\\
+FR8.4 & Audit log of every admin action (who, what, when, which item) & Med & -- & -- & 2\\
+FR8.5 & Admin role given only through seed data / database, never self-service & High & -- & -- & 2\\
+\end{longtable}
+}
+
+\textbf{Sprint 1 total (proposed): 84 points} across 26 functional requirements and 26 user stories.
+
+\section*{Non-functional requirements (apply to every sprint)}
+HTTPS (NFR5); server-side authorisation on every API route, reinforced by row-level security (NFR7); IBA domain check on the server (NFR8); contact details never in the directory (NFR10); search under 2 s at the 95th percentile on 1,000 members (NFR1, NFR2); usable at 360 px width (NFR13); every screen within three clicks of the dashboard (NFR14); lint and type-check in CI, no direct commits to \texttt{main} (NFR15); WCAG 2.1 AA basics (NFR17); rate-limited sign-in, registration and password reset (NFR20); a test for every High-priority FR (NFR21).
+
+\section*{Revision history}
+\begin{revisions}
+1.0 & 17 Nov 2026 & Ahmed Abdul Rahim & First version from the SRS and the sprint planning decisions; proposed Sprint 1 estimates.\\
+\end{revisions}
+
+\end{document}

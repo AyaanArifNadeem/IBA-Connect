@@ -1,0 +1,30 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ibaconnect}
+\geometry{landscape,margin=15mm}
+\docinfo{Sprint 1 Daily Scrum Log}{1.0}{17 Nov 2026}
+
+% One entry per member per daily scrum. Add rows only from real meetings:
+% \entry{date}{member}{done since last scrum}{plan until next scrum}{blockers}
+\newcommand{\entry}[5]{#1 & #2 & #3 & #4 & #5\\\midrule}
+
+\begin{document}
+\makedoctitle
+
+Each daily scrum records, for every member present: what they finished since the last scrum, what they will do next, and anything blocking them. Entries are added only from real meetings, with the Scrum Master's notes as the source.
+
+{\small
+\begin{longtable}{@{}p{20mm} p{32mm} >{\raggedright\arraybackslash}p{60mm} >{\raggedright\arraybackslash}p{60mm} >{\raggedright\arraybackslash}p{55mm}@{}}
+\toprule
+\textbf{Date} & \textbf{Member} & \textbf{Done since last scrum} & \textbf{Next} & \textbf{Blockers}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+% \entry{18 Nov 2026}{Name}{...}{...}{None}
+ & & & & \\[14pt]\midrule
+ & & & & \\[14pt]\midrule
+ & & & & \\[14pt]
+\end{longtable}
+}
+
+\end{document}
