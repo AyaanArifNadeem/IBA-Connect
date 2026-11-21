@@ -120,7 +120,7 @@ headers.forEach((h, i) => {
   const cell = header.getCell(i + 2);
   cell.value = h;
   cell.font = { bold: true, name: "Calibri", size: 11 };
-  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9E1F2" } };
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
 });
 ordered.forEach((c, n) => {
   const row = ws.getRow(n + 3);

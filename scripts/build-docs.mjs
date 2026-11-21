@@ -6,7 +6,7 @@
  *   npm run docs:build -- backlog   build documents whose path contains "backlog"
  *
  * A document is any .tex file that contains \documentclass. Each is compiled twice with
- * pdflatex (for page references) in its own folder, with docs/common on the TeX path.
+ * pdflatex three times (for page references and page totals) in its own folder, with docs/common on the TeX path.
  * PDFs are written to docs/build/<same relative path>.pdf (git-ignored).
  */
 import { spawnSync } from "node:child_process";
@@ -48,7 +48,8 @@ for (const file of docs) {
   mkdirSync(outDir, { recursive: true });
   const env = { ...process.env, TEXINPUTS: `.${delimiter}${commonDir}${delimiter}${process.env.TEXINPUTS ?? ""}` };
   let ok = true;
-  for (let pass = 1; pass <= 2 && ok; pass++) {
+  // Three passes: long tables and "Page x of y" settle only on the third run
+  for (let pass = 1; pass <= 3 && ok; pass++) {
     const result = spawnSync(
       "pdflatex",
       ["-interaction=nonstopmode", "-halt-on-error", `-output-directory=${outDir}`, basename(file)],

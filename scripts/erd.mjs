@@ -73,11 +73,11 @@ export function toDot({ models }) {
       .map((f) => {
         const keys = [f.id ? "PK" : "", f.fk ? "FK" : "", f.unique && !f.id ? "UQ" : ""].filter(Boolean).join(",");
         const type = `${f.type}${f.optional ? "?" : ""}`;
-        return `<TR><TD ALIGN="LEFT" PORT="${f.name}">${f.id ? "<B>" : ""}${esc(f.name)}${f.id ? "</B>" : ""}</TD><TD ALIGN="LEFT"><FONT COLOR="#6B7280">${esc(type)}</FONT></TD><TD ALIGN="LEFT">${keys ? `<FONT COLOR="#8B0000">${keys}</FONT>` : " "}</TD></TR>`;
+        return `<TR><TD ALIGN="LEFT" PORT="${f.name}">${f.id ? "<B>" : ""}${esc(f.name)}${f.id ? "</B>" : ""}</TD><TD ALIGN="LEFT"><FONT COLOR="#6B7280">${esc(type)}</FONT></TD><TD ALIGN="LEFT">${keys ? `<FONT COLOR="#000000">${keys}</FONT>` : " "}</TD></TR>`;
       })
       .join("");
     lines.push(
-      `  ${model.name} [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#9CA3AF"><TR><TD COLSPAN="3" BGCOLOR="#8B0000"><FONT COLOR="white"><B>${model.name}</B></FONT></TD></TR>${rows}</TABLE>>];`,
+      `  ${model.name} [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#9CA3AF"><TR><TD COLSPAN="3" BGCOLOR="#000000"><FONT COLOR="white"><B>${model.name}</B></FONT></TD></TR>${rows}</TABLE>>];`,
     );
   }
   for (const model of models) {
