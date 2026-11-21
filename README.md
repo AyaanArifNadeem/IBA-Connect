@@ -101,7 +101,7 @@ Details, commit conventions and the Definition of Done are in [CONTRIBUTING.md](
 
 | Member | Scrum role |
 |---|---|
-| Ayaan Arif Nadeem | Product Owner |
+| Ayaan Arif Nadeem | Frontend Co-Developer & UX/UI Co-Designer |
 | Ahsan Haris | Scrum Master |
 | Ahmed Abdul Rahim | Technical Lead |
 | Muhammad Mujtaba Khurram | Frontend Developer |
