@@ -1,6 +1,7 @@
 import "server-only";
 import { validationFailed } from "@/lib/api/errors";
 import { db } from "@/lib/db";
+import { lookupCache } from "@/lib/lookup-cache";
 import { Role } from "@/lib/generated/prisma/enums";
 import { skillSlug, type ProfileInput } from "@/lib/validation/profile";
 
@@ -62,7 +63,7 @@ export async function saveProfile(member: { id: string; role: Role; profileCompl
     }
   }
 
-  return db.$transaction(async (tx) => {
+  const updated = await db.$transaction(async (tx) => {
     // Shared skill list: reuse existing skills, add new ones
     const skills = await Promise.all(
       input.skills.map((name) =>
@@ -94,24 +95,41 @@ export async function saveProfile(member: { id: string; role: Role; profileCompl
       },
     });
   });
+  // The member may have added a skill nobody had before: the suggestion list must show it
+  invalidateSkillList();
+  return updated;
 }
 
-/** Active courses for pickers, optionally filtered by code or title. */
-export function listCourses(query?: string) {
+const courseSelect = { id: true, code: true, title: true, department: true } as const;
+
+function findCourses(query?: string) {
   const q = query?.trim();
   return db.course.findMany({
     where: {
       retiredAt: null,
       ...(q ? { OR: [{ code: { contains: q, mode: "insensitive" } }, { title: { contains: q, mode: "insensitive" } }] } : {}),
     },
-    select: { id: true, code: true, title: true, department: true },
+    select: courseSelect,
     orderBy: { code: "asc" },
     take: 100,
   });
 }
 
-/** Skill suggestions for the skills field. */
-export function suggestSkills(query?: string) {
+// Every directory, board and profile page loads the unfiltered lists; they change only when an admin
+// edits a course or a member adds a new skill, so they are kept for a short while (lib/lookup-cache.ts)
+const allCourses = lookupCache(() => findCourses());
+const allSkills = lookupCache(() => findSkills());
+
+/** Call after the change has been committed. */
+export const invalidateCourseList = () => allCourses.invalidate();
+export const invalidateSkillList = () => allSkills.invalidate();
+
+/** Active courses for pickers, optionally filtered by code or title. Only the full list is cached. */
+export function listCourses(query?: string) {
+  return query?.trim() ? findCourses(query) : allCourses.get();
+}
+
+function findSkills(query?: string) {
   const q = query?.trim();
   return db.skill.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
@@ -119,4 +137,9 @@ export function suggestSkills(query?: string) {
     orderBy: { name: "asc" },
     take: q ? 20 : 200,
   });
+}
+
+/** Skill suggestions for the skills field. Only the full list is cached. */
+export function suggestSkills(query?: string) {
+  return query?.trim() ? findSkills(query) : allSkills.get();
 }

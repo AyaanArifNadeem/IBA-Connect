@@ -13,6 +13,8 @@ if (!url) {
   );
 }
 process.env.DATABASE_URL = url;
+// Tests write straight to the database, so the short-lived course/skill list cache is off by default
+process.env.LOOKUP_CACHE_TTL_MS = "0";
 
 // Route handlers are called directly in these tests, outside a Next.js request, where
 // `connection()` (used to mark the session lookup as request-time) is not available.

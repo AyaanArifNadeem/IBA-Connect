@@ -4,6 +4,7 @@ import { conflict, notFound } from "@/lib/api/errors";
 import { DEPARTMENTS } from "@/lib/constants/academics";
 import { db } from "@/lib/db";
 import { recordAdminAction } from "./audit";
+import { invalidateCourseList } from "./profile";
 
 export const courseSchema = z.object({
   code: z
@@ -41,11 +42,13 @@ async function assertCodeFree(code: string, exceptId?: string) {
 export async function addCourse(adminId: string, input: z.infer<typeof courseSchema>) {
   const code = input.code.replace(/\s/g, "");
   await assertCodeFree(code);
-  return db.$transaction(async (tx) => {
+  const created = await db.$transaction(async (tx) => {
     const course = await tx.course.create({ data: { ...input, code } });
     await recordAdminAction(adminId, "course.add", { type: "course", id: course.id }, { code }, tx);
     return course;
   });
+  invalidateCourseList(); // after the commit, so the next read cannot cache the old list
+  return created;
 }
 
 /**
@@ -59,7 +62,7 @@ export async function updateCourse(adminId: string, id: string, input: z.infer<t
   if (code) await assertCodeFree(code, id);
 
   const { retired, ...fields } = input;
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const updated = await tx.course.update({
       where: { id },
       data: {
@@ -72,4 +75,6 @@ export async function updateCourse(adminId: string, id: string, input: z.infer<t
     await recordAdminAction(adminId, action, { type: "course", id }, { ...input }, tx);
     return updated;
   });
+  invalidateCourseList(); // edit, retire or restore: pickers must change straight away on this server
+  return result;
 }
