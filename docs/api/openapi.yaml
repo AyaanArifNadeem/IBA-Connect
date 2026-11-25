@@ -53,6 +53,41 @@ paths:
                       version: { type: string }
                       time: { type: string, format: date-time }
 
+  /internal/email-outbox:
+    get:
+      tags: [System]
+      summary: Send queued notification emails (scheduled job)
+      description: >
+        Sends the connection-request emails that are due and retries earlier failures. Called by the
+        cron job in vercel.json with `Authorization: Bearer $CRON_SECRET`; not for members. Returns 404
+        when CRON_SECRET is not configured.
+      security: []
+      responses:
+        "200":
+          description: What was done in this run
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      sent: { type: integer }
+                      retrying: { type: integer }
+                      failed: { type: integer }
+                      dropped: { type: integer }
+        "401":
+          description: Missing or wrong secret
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: CRON_SECRET is not configured
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   # ------------------------------------------------------------------ Auth
   /auth/register:
     post:

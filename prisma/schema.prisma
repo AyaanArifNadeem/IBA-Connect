@@ -194,10 +194,34 @@ model Connection {
   originPost   Post?         @relation(fields: [originPostId], references: [id], onDelete: SetNull)
   messages     Message[]
   postResponse PostResponse?
+  emailOutbox  EmailOutbox[]
 
   @@index([requesterId, createdAt])
   @@index([recipientId, status])
   @@index([requesterId, recipientId])
+}
+
+/// Notification emails waiting to be sent (FR3.6). Written in the same transaction as the thing they
+/// announce, so a saved request always has its email queued; a worker sends it and retries failures.
+/// Holds no message content: the email is built from the connection when it is sent.
+model EmailOutbox {
+  id            String    @id @default(uuid()) @db.Uuid
+  /// What to send, e.g. "connection_request"
+  kind          String
+  connectionId  String    @db.Uuid
+  attempts      Int       @default(0)
+  /// Not tried before this time; also used as a short lease while one worker is sending
+  nextAttemptAt DateTime  @default(now())
+  sentAt        DateTime?
+  /// Set when the retries ran out
+  failedAt      DateTime?
+  createdAt     DateTime  @default(now())
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  /// One notification of each kind per connection, so retries and duplicates cannot send it twice
+  @@unique([kind, connectionId])
+  @@index([sentAt, failedAt, nextAttemptAt])
 }
 
 /// Private 1:1 messages, only within accepted connections (FR3.4, FR3.8)

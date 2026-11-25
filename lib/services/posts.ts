@@ -146,16 +146,18 @@ export const responseSchema = z.object({
  * with the same limits, cooldown and block rules as any request (FR3.1).
  */
 export async function respondToPost(responder: { id: string; name: string }, postId: string, message: string, now = new Date()) {
-  const post = await db.post.findFirst({
-    where: { id: postId, author: { status: UserStatus.ACTIVE, deletedAt: null } },
-    select: { id: true, authorId: true, title: true, status: true, expiresAt: true },
-  });
+  // Independent reads, run together; the rules below are applied in the original order
+  const [post, existing] = await Promise.all([
+    db.post.findFirst({
+      where: { id: postId, author: { status: UserStatus.ACTIVE, deletedAt: null } },
+      select: { id: true, authorId: true, title: true, status: true, expiresAt: true },
+    }),
+    db.postResponse.findUnique({ where: { postId_responderId: { postId, responderId: responder.id } } }),
+  ]);
   if (!post) throw notFound("This post could not be found.");
   if (post.authorId === responder.id) throw badRequest("You cannot respond to your own post.");
   if (post.status !== PostStatus.OPEN || post.expiresAt <= now) throw conflict("This post is closed and no longer takes responses.");
-  if (await db.postResponse.findUnique({ where: { postId_responderId: { postId, responderId: responder.id } } })) {
-    throw conflict("You already responded to this post.");
-  }
+  if (existing) throw conflict("You already responded to this post.");
 
   const { connection, remaining } = await sendRequest(
     responder,
