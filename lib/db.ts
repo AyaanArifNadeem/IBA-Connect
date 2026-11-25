@@ -1,15 +1,22 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/lib/generated/prisma/client";
+import { databaseUrlWarning, poolConfig } from "@/lib/db-config";
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Copy .env.example to .env.local and fill it in.");
   }
+  const warning = databaseUrlWarning(connectionString);
+  if (warning && process.env.NODE_ENV === "production") console.warn(`[db] ${warning}`);
   return new PrismaClient({
     // Fail fast instead of hanging when the database cannot be reached, and keep idle sockets alive
-    adapter: new PrismaPg({ connectionString, connectionTimeoutMillis: 10_000, keepAlive: true }),
+    // (settings and per-deployment overrides: lib/db-config.ts). Idle-connection errors are logged
+    // without the message detail, which can contain host names.
+    adapter: new PrismaPg(poolConfig(connectionString), {
+      onPoolError: (err) => console.warn("[db] idle connection error", { code: (err as { code?: string }).code ?? "unknown" }),
+    }),
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 }
