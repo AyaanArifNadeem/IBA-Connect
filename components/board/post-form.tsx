@@ -63,8 +63,9 @@ export function PostForm({ courses, initial = EMPTY, postId }: Props) {
       return;
     }
     toast.success(editing ? "Post updated" : "Your post is on the board");
+    // The destination page is rendered fresh by this navigation (dynamic pages are not kept in the
+    // client cache), and a post does not change anything in the shared shell, so no refresh is needed.
     router.push(editing ? `/board/my-posts/${postId}` : `/board/my-posts/${result.data.id}`);
-    router.refresh();
   }
 
   const error = (field: Field) =>

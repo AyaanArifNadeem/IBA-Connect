@@ -5,12 +5,14 @@ import { PostForm } from "@/components/board/post-form";
 import { daysLeft } from "@/lib/board";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn(), back: vi.fn() }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh, back: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 const fetchMock = vi.fn();
 beforeEach(() => {
   fetchMock.mockReset();
   push.mockReset();
+  refresh.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -47,6 +49,8 @@ describe("PostForm (US4.1, P11)", () => {
       course: "CSE341",
       department: null,
     });
+    // The navigation renders the new post page fresh; a second refresh would only repeat that work
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("does not allow a course and a department tag together", async () => {

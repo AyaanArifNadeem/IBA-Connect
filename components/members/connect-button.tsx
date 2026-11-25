@@ -2,7 +2,6 @@
 
 import { Check, Clock, MessageCircle, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -21,7 +20,6 @@ const NOTE_MAX = 300;
 
 /** Connect button and pop-up on a member profile (FR3.1, US3.1, wireframe P07). */
 export function ConnectButton({ memberId, memberName, initial }: { memberId: string; memberName: string; initial: RelationshipView }) {
-  const router = useRouter();
   const [rel, setRel] = useState(initial);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -49,7 +47,8 @@ export function ConnectButton({ memberId, memberName, initial }: { memberId: str
     setRel({ state: "pending_outgoing", connectionId: result.data.id });
     setOpen(false);
     toast.success(`Request sent to ${memberName}`);
-    router.refresh();
+    // No router.refresh(): the button already shows the new state from the response, and sending a
+    // request changes none of the shell badges (those count requests the member has received).
   }
 
   switch (rel.state) {

@@ -4,12 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileForm, type ProfileFormValues } from "@/components/profile/profile-form";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 const fetchMock = vi.fn();
 beforeEach(() => {
   push.mockReset();
+  refresh.mockReset();
   fetchMock.mockReset();
   fetchMock.mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
   vi.stubGlobal("fetch", fetchMock);
@@ -97,6 +99,25 @@ describe("ProfileForm (US1.5)", () => {
     const [, init] = fetchMock.mock.calls.find(([url]) => url === "/api/v1/profile")!;
     expect(init.method).toBe("PUT");
     expect(JSON.parse(init.body)).toMatchObject({ batch: 2023, semester: 5, skills: ["Python"], courseIds: [courses[0].id] });
+    // Same name as before, so the shared shell is still correct and no extra render is requested
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("refreshes the shared shell only when the name it shows has changed", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockImplementation(async (url: string) =>
+      url === "/api/v1/profile"
+        ? new Response(JSON.stringify({ data: {} }), { status: 200 })
+        : new Response(JSON.stringify({ data: [] }), { status: 200 }),
+    );
+    renderForm({ ...empty, batch: "2023", programme: "BS Computer Science", department: "Computer Science", semester: "5", bio: "Hi", skills: ["Python"], courseIds: [courses[0].id] });
+    const name = screen.getByLabelText("Full name");
+    await user.clear(name);
+    await user.type(name, "Sara R. Raza");
+    await user.click(screen.getByRole("button", { name: "Finish setup" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard"));
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("shows field errors from the server", async () => {

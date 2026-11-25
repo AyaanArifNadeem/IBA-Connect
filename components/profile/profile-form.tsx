@@ -88,7 +88,10 @@ export function ProfileForm({ initial, courses, isAlumnus, submitLabel, redirect
     if (result.ok) {
       toast.success("Profile saved");
       router.push(redirectTo);
-      router.refresh();
+      // The signed-in layout (which shows the member's name) is shared between pages and is not
+      // re-rendered by a navigation, so it only needs a refresh when the name it shows has changed.
+      // The destination page itself is rendered fresh by the navigation above.
+      if (values.name.trim() !== initial.name.trim()) router.refresh();
       return;
     }
     const details = result.error.details as { path: string; message: string }[] | undefined;
