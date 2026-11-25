@@ -44,6 +44,8 @@ describe("proxy with a signed-in member", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
     const { updateSession } = await import("@/lib/supabase/proxy");
     const request = new NextRequest(`http://localhost${path}`);
+    // A signed-in browser always sends the Supabase session cookie
+    request.cookies.set("sb-abcdefgh-auth-token", "session");
     if (lastSeen !== undefined) request.cookies.set("iba_last_seen", String(lastSeen));
     return updateSession(request);
   }
