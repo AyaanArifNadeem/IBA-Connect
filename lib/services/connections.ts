@@ -198,10 +198,15 @@ export async function listRequests(memberId: string, view: InboxView, now = new 
 
 export type InboxItem = Awaited<ReturnType<typeof listRequests>>[number];
 
-/** Counts for the inbox tabs and the menu badge (FR3.6). */
+/** Pending requests waiting for the member: the menu badge (FR3.6). One query, unlike inboxCounts(). */
+export function incomingRequestCount(memberId: string): Promise<number> {
+  return db.connection.count({ where: { recipientId: memberId, status: ConnectionStatus.PENDING } });
+}
+
+/** Counts for the inbox tabs (FR3.6). */
 export async function inboxCounts(memberId: string) {
   const [incoming, outgoing, accepted] = await Promise.all([
-    db.connection.count({ where: { recipientId: memberId, status: ConnectionStatus.PENDING } }),
+    incomingRequestCount(memberId),
     db.connection.count({ where: { requesterId: memberId, status: { in: [ConnectionStatus.PENDING, ConnectionStatus.DECLINED] } } }),
     db.connection.count({ where: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] } }),
   ]);

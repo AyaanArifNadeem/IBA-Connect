@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { Role, UserStatus } from "@/lib/generated/prisma/enums";
 import { getCurrentMember, getIdentity } from "@/lib/auth/session";
-import { inboxCounts } from "@/lib/services/connections";
+import { incomingRequestCount } from "@/lib/services/connections";
 import { unreadTotal } from "@/lib/services/messages";
 import { avatarUrl } from "@/lib/storage/avatars";
 import { AppShell } from "./app-shell";
@@ -21,11 +21,15 @@ export async function SignedInShell({ children }: { children: ReactNode }) {
   // Suspended members are signed out on their next request (FR1.6, FR8.3)
   if (member.status === UserStatus.SUSPENDED) redirect("/sign-out?reason=suspended");
 
+  // Independent of each other, so they run together instead of one after another
+  const [avatar, requests, messages] = await Promise.all([
+    avatarUrl(member.avatarPath),
+    incomingRequestCount(member.id),
+    unreadTotal(member.id),
+  ]);
+
   return (
-    <AppShell
-      user={{ name: member.name, avatarUrl: await avatarUrl(member.avatarPath), isAdmin: member.role === Role.ADMIN }}
-      counts={{ requests: (await inboxCounts(member.id)).incoming, messages: await unreadTotal(member.id) }}
-    >
+    <AppShell user={{ name: member.name, avatarUrl: avatar, isAdmin: member.role === Role.ADMIN }} counts={{ requests, messages }}>
       {children}
     </AppShell>
   );

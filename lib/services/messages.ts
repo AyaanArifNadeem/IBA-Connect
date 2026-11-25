@@ -87,15 +87,18 @@ export async function sendMessage(memberId: string, connectionId: string, body: 
 
 /** The member's conversations, most recent activity first, with the last message (P09 list). */
 export async function listConversations(memberId: string) {
-  const unread = await unreadByConversation(memberId);
-  const connections = await db.connection.findMany({
-    where: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] },
-    include: {
-      requester: { select: { id: true, name: true, avatarPath: true, deletedAt: true } },
-      recipient: { select: { id: true, name: true, avatarPath: true, deletedAt: true } },
-      messages: { orderBy: { sentAt: "desc" }, take: 1 },
-    },
-  });
+  // Two independent reads: run them together
+  const [unread, connections] = await Promise.all([
+    unreadByConversation(memberId),
+    db.connection.findMany({
+      where: { status: ConnectionStatus.ACCEPTED, OR: [{ requesterId: memberId }, { recipientId: memberId }] },
+      include: {
+        requester: { select: { id: true, name: true, avatarPath: true, deletedAt: true } },
+        recipient: { select: { id: true, name: true, avatarPath: true, deletedAt: true } },
+        messages: { orderBy: { sentAt: "desc" }, take: 1 },
+      },
+    }),
+  ]);
   return connections
     .map((c) => {
       const other = c.requesterId === memberId ? c.recipient : c.requester;
