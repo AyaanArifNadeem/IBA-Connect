@@ -51,9 +51,26 @@ export async function getConversation(memberId: string, connectionId: string) {
 
 export type ChatMessage = { id: string; body: string; sentAt: string; mine: boolean; readAt: string | null };
 
-/** Messages in order; with `after`, only newer ones (for polling). The latest 200 otherwise. */
-export async function listMessages(memberId: string, connectionId: string, after?: Date): Promise<ChatMessage[]> {
-  await getConversation(memberId, connectionId);
+/** The conversation as returned by getConversation(): proof that the member may read it. */
+export type Conversation = Awaited<ReturnType<typeof getConversation>>;
+
+/**
+ * The same access rules as getConversation() (404 for strangers, 403 until accepted) without
+ * loading the other member or the post: polling only needs the yes/no.
+ */
+async function assertConversationAccess(memberId: string, connectionId: string): Promise<void> {
+  const c = await db.connection.findUnique({
+    where: { id: connectionId },
+    select: { requesterId: true, recipientId: true, status: true },
+  });
+  if (!c || (c.requesterId !== memberId && c.recipientId !== memberId)) throw notFound("Conversation not found.");
+  if (c.status !== ConnectionStatus.ACCEPTED) {
+    throw new ApiError(403, "forbidden", "You can message each other once the connection request is accepted.");
+  }
+}
+
+/** Not exported: callers must go through an access check first (listMessages or listConversationMessages). */
+async function queryMessages(memberId: string, connectionId: string, after?: Date): Promise<ChatMessage[]> {
   const rows = after
     ? await db.message.findMany({ where: { connectionId, sentAt: { gt: after } }, orderBy: [{ sentAt: "asc" }, { id: "asc" }], take: 200 })
     : (await db.message.findMany({ where: { connectionId }, orderBy: [{ sentAt: "desc" }, { id: "desc" }], take: 200 })).reverse();
@@ -64,6 +81,26 @@ export async function listMessages(memberId: string, connectionId: string, after
     mine: m.senderId === memberId,
     readAt: m.readAt?.toISOString() ?? null,
   }));
+}
+
+/**
+ * Messages in order; with `after`, only newer ones (for polling). The latest 200 otherwise.
+ * The access check and the message query run together (one round trip instead of two); if access is
+ * refused the error is thrown and the query result is never used.
+ */
+export async function listMessages(memberId: string, connectionId: string, after?: Date): Promise<ChatMessage[]> {
+  const [, messages] = await Promise.all([assertConversationAccess(memberId, connectionId), queryMessages(memberId, connectionId, after)]);
+  return messages;
+}
+
+/** Messages of a conversation the caller has already been granted by getConversation(). */
+export function listConversationMessages(memberId: string, conversation: Conversation, after?: Date): Promise<ChatMessage[]> {
+  return queryMessages(memberId, conversation.id, after);
+}
+
+/** True when the list holds a message from the other member that has not been read yet. */
+export function hasUnreadIncoming(messages: ChatMessage[]): boolean {
+  return messages.some((m) => !m.mine && m.readAt === null);
 }
 
 /** Send a text message (FR3.4, FR3.8). Refused without an accepted connection or when blocked (FR3.7). */

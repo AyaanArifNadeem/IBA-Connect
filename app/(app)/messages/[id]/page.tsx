@@ -5,7 +5,7 @@ import { ChatThread } from "@/components/messages/chat-thread";
 import { ConversationList } from "@/components/messages/conversation-list";
 import { ApiError } from "@/lib/api/errors";
 import { requireCompletedProfile } from "@/lib/auth/pages";
-import { POLL_INTERVAL_MS, getConversation, listConversations, listMessages, markRead } from "@/lib/services/messages";
+import { POLL_INTERVAL_MS, getConversation, listConversationMessages, listConversations, markRead } from "@/lib/services/messages";
 import { avatarUrls } from "@/lib/storage/avatars";
 
 export const metadata: Metadata = { title: "Chat · IBA Connect" };
@@ -37,7 +37,8 @@ export default async function ChatPage({ params }: PageProps<"/messages/[id]">) 
     throw err;
   }
 
-  const messages = await listMessages(member.id, id);
+  // The conversation was just authorised above, so it is not looked up a second time
+  const messages = await listConversationMessages(member.id, conversation);
   await markRead(member.id, id); // opening the chat reads it (US3.6)
   const conversations = await listConversations(member.id);
   const avatars = await avatarUrls([conversation.other.avatarPath, ...conversations.map((c) => c.avatarPath)]);

@@ -73,6 +73,33 @@ describe("ChatThread (US3.5, P09)", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/connections/c1/messages?after=2026-11-18T10%3A00%3A00.000Z");
   });
 
+  it("does not start a new poll while the previous one is still running", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let finish!: (r: Response) => void;
+    fetchMock.mockImplementation(() => new Promise<Response>((resolve) => (finish = resolve)));
+    renderThread({ pollMs: 1000 });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3500); // three intervals pass with the first request unanswered
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finish(json(200, { data: [] }));
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2); // polling resumes once the first one is done
+  });
+
+  it("gives up on a poll that never answers, so chat does not stall", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fetchMock.mockImplementation(() => new Promise<Response>(() => {}));
+    renderThread({ pollMs: 1000 });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("explains when the other member has left", () => {
     renderThread({ other: { ...other, name: "Deleted member", email: null, deleted: true } });
     expect(screen.getByText("This member has left IBA Connect.")).toBeInTheDocument();

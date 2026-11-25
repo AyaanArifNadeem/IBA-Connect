@@ -3,7 +3,7 @@ import { notFound } from "@/lib/api/errors";
 import { created, ok, route } from "@/lib/api/handler";
 import { parseJson, parseQuery } from "@/lib/api/validation";
 import { requireMember } from "@/lib/auth/session";
-import { listMessages, markRead, messageSchema, sendMessage } from "@/lib/services/messages";
+import { hasUnreadIncoming, listMessages, markRead, messageSchema, sendMessage } from "@/lib/services/messages";
 
 type Ctx = RouteContext<"/api/v1/connections/[id]/messages">;
 
@@ -19,8 +19,9 @@ export const GET = route<Ctx>(async (request, ctx) => {
   const id = await connectionId(ctx);
   const { after } = parseQuery(request, z.object({ after: z.iso.datetime().optional() }));
   const messages = await listMessages(member.id, id, after ? new Date(after) : undefined);
-  // Reading the chat marks the other member's messages as read (US3.6)
-  await markRead(member.id, id);
+  // Reading the chat marks the other member's messages as read (US3.6). An empty poll (the common
+  // case) has nothing to mark, so it makes no write; loading the whole chat always marks it.
+  if (!after || hasUnreadIncoming(messages)) await markRead(member.id, id);
   return ok(messages);
 });
 

@@ -22,6 +22,9 @@ type Props = {
   pollMs?: number;
 };
 
+/** A poll that has been running longer than this is assumed lost, so polling can continue. */
+const POLL_STALE_MS = 15_000;
+
 const clock = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
 /** Merge new messages in, by id, keeping time order. */
@@ -39,6 +42,7 @@ export function ChatThread({ connectionId, other, note, requestedByMe, initialMe
   const [sending, setSending] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
   const latest = useRef(initialMessages.at(-1)?.sentAt);
+  const pollStartedAt = useRef<number | null>(null);
 
   useEffect(() => {
     latest.current = messages.at(-1)?.sentAt;
@@ -46,9 +50,19 @@ export function ChatThread({ connectionId, other, note, requestedByMe, initialMe
   }, [messages]);
 
   const poll = useCallback(async () => {
-    const after = latest.current ? `?after=${encodeURIComponent(latest.current)}` : "";
-    const result = await getJson<ChatMessage[]>(`/api/v1/connections/${connectionId}/messages${after}`);
-    if (result.ok && result.data.length) setMessages((m) => mergeMessages(m, result.data));
+    // One poll at a time: on a slow connection the interval and the "tab is visible again" check
+    // would otherwise stack up requests that each cost the server a conversation check
+    const startedAt = pollStartedAt.current;
+    if (startedAt !== null && Date.now() - startedAt < POLL_STALE_MS) return;
+    const token = Date.now();
+    pollStartedAt.current = token;
+    try {
+      const after = latest.current ? `?after=${encodeURIComponent(latest.current)}` : "";
+      const result = await getJson<ChatMessage[]>(`/api/v1/connections/${connectionId}/messages${after}`);
+      if (result.ok && result.data.length) setMessages((m) => mergeMessages(m, result.data));
+    } finally {
+      if (pollStartedAt.current === token) pollStartedAt.current = null;
+    }
   }, [connectionId]);
 
   // Poll while the page is visible; check straight away when the member comes back to it
